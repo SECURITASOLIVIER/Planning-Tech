@@ -1,9 +1,7 @@
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm'
-
 const SUPABASE_URL='https://ilxdqvbcvcwfklvkyfoj.supabase.co'
 const SUPABASE_KEY='sb_publishable_7f0bDxce4zdPCr5_4go4Wg_S6wlEPFY'
-const supabase=createClient(SUPABASE_URL,SUPABASE_KEY)
+const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY)
 
 const S={
  session:null,user:null,profile:null,isManager:false,
@@ -52,27 +50,60 @@ async function enterSession(session){
  showApp();await loadAll();subscribeRealtime()
 }
 function bindAuth(){
- $('loginForm').addEventListener('submit',async e=>{
-  e.preventDefault()
-  const email=$('loginEmail').value.trim(),password=$('loginPassword').value
+ async function loginWithRole(role,email,password){
   const {data,error}=await supabase.auth.signInWithPassword({email,password})
-  if(error){toast(error.message);return}
+  if(error){toast('Identifiants incorrects ou compte inexistant.');return}
+  const {data:profile,error:profileError}=await supabase.from('profiles').select('*').eq('id',data.user.id).single()
+  if(profileError||!profile){
+   await supabase.auth.signOut();toast('Profil utilisateur introuvable.');return
+  }
+  if(!profile.active){
+   await supabase.auth.signOut();toast('Ce compte est désactivé.');return
+  }
+  if(profile.role!==role){
+   await supabase.auth.signOut()
+   toast(role==='manager'?'Ce compte n’est pas un compte Manager.':'Ce compte n’est pas un compte Technicien.')
+   return
+  }
   await enterSession(data.session)
+ }
+
+ $('managerLoginForm').addEventListener('submit',async e=>{
+  e.preventDefault()
+  await loginWithRole('manager',$('managerEmail').value.trim(),$('managerPassword').value)
  })
+
+ $('techLoginForm').addEventListener('submit',async e=>{
+  e.preventDefault()
+  await loginWithRole('technician',$('techEmail').value.trim(),$('techPassword').value)
+ })
+
  $('setupForm').addEventListener('submit',async e=>{
   e.preventDefault()
-  const body={bootstrap:$('setupCode').value.trim(),email:$('setupEmail').value.trim(),password:$('setupPassword').value,display_name:$('setupName').value.trim()}
-  const {data,error}=await supabase.functions.invoke('bootstrap-manager',{body})
-  if(error){toast(error.message);return}
-  if(data?.error){toast(data.error);return}
-  const sign=await supabase.auth.signInWithPassword({email:body.email,password:body.password})
-  if(sign.error){toast('Compte créé. Connecte-toi avec tes identifiants.');return}
-  await enterSession(sign.data.session)
+  const submit=$('setupSubmit')
+  submit.disabled=true;submit.textContent='Création...'
+  try{
+   const body={
+    bootstrap:$('setupCode').value.trim(),
+    email:$('setupEmail').value.trim(),
+    password:$('setupPassword').value,
+    display_name:$('setupName').value.trim()
+   }
+   const {data,error}=await supabase.functions.invoke('bootstrap-manager',{body})
+   if(error){toast('Création impossible : '+error.message);return}
+   if(data?.error){toast(data.error);return}
+   toast('Compte Manager créé. Connexion en cours...')
+   const sign=await supabase.auth.signInWithPassword({email:body.email,password:body.password})
+   if(sign.error){toast('Manager créé. Utilise maintenant Accès Manager.');return}
+   await enterSession(sign.data.session)
+  } finally {
+   submit.disabled=false;submit.textContent='Créer mon premier compte Manager'
+  }
  })
- $('showLogin').onclick=()=>{$('loginPane').classList.remove('hidden');$('setupPane').classList.add('hidden')}
- $('showSetup').onclick=()=>{$('setupPane').classList.remove('hidden');$('loginPane').classList.add('hidden')}
+
  $('logout').onclick=async()=>{await supabase.auth.signOut();location.reload()}
 }
+
 async function loadAll(){
  const qs=[
   supabase.from('tickets').select('*').order('arrival_at',{ascending:false}),
@@ -318,7 +349,7 @@ async function exportExcel(){
  try{
   const XLSX=await import('https://cdn.jsdelivr.net/npm/xlsx@0.18.5/+esm')
   const [comments,materials,history]=await Promise.all([supabase.from('ticket_comments').select('*').order('created_at'),supabase.from('ticket_materials').select('*').order('created_at'),supabase.from('ticket_history').select('*').order('created_at')])
-  const ticketRows=S.tickets.map(t=>({Numero:t.ticket_number,Titre:t.subject,Utilisateur:t.requester,Technicien:profileName(t.assigned_to),Statut:t.status,Priorite:t.priority,Categorie:t.category,Type:t.intervention_type,Bloquant:t.is_blocking?'Oui':'Non,',Incident_parent:t.parent_incident,Arrivee:fmt(t.arrival_at),Debut:fmt(t.planned_start),Fin:fmt(t.planned_end),Resolution:t.resolution_comment,Cloture:fmt(t.closed_at)}))
+  const ticketRows=S.tickets.map(t=>({Numero:t.ticket_number,Titre:t.subject,Utilisateur:t.requester,Technicien:profileName(t.assigned_to),Statut:t.status,Priorite:t.priority,Categorie:t.category,Type:t.intervention_type,Bloquant:t.is_blocking?'Oui':'Non',Incident_parent:t.parent_incident,Arrivee:fmt(t.arrival_at),Debut:fmt(t.planned_start),Fin:fmt(t.planned_end),Resolution:t.resolution_comment,Cloture:fmt(t.closed_at)}))
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ticketRows),'Tickets')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet((comments.data||[]).map(c=>({Ticket:c.ticket_id,Auteur:c.author_name,Commentaire:c.body,Date:fmt(c.created_at)}))),'Commentaires')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.profiles.map(p=>({Nom:p.display_name,Email:p.email,Role:p.role,Actif:p.active?'Oui':'Non',Debut:p.work_start,Fin:p.work_end})),'Techniciens')
