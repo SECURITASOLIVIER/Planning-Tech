@@ -552,3 +552,18 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .distribution-row{grid-template-columns:minmax(0,1fr) auto}
  .distribution-row .actions{grid-column:1/-1}
 }
+
+/* Large ticket comment composer */
+.ticket-comment-composer{display:grid;gap:8px;border:1px solid #dbe8f2;background:#f8fbfe;border-radius:12px;padding:10px;margin:10px 0}
+.ticket-comment-composer-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ticket-comment-composer-head>div{display:flex;align-items:center;gap:6px;color:#23577f}
+.ticket-comment-composer-head b{font-size:11px}
+.ticket-comment-composer-head>span{font-size:8px;color:var(--muted);font-weight:850}
+.ticket-comment-composer textarea{width:100%;min-height:150px;resize:vertical;border:1px solid #cfddea;border-radius:10px;padding:10px 11px;font:inherit;font-size:11px;line-height:1.45;background:#fff;color:var(--ink)}
+.ticket-comment-composer textarea:focus{outline:2px solid #9ccff1;outline-offset:1px;border-color:#6fb6e6}
+.ticket-comment-submit{justify-self:end;display:flex;align-items:center;gap:6px;min-height:38px}
+@media(max-width:640px){
+ .ticket-comment-composer{padding:8px}
+ .ticket-comment-composer textarea{min-height:180px;font-size:12px;padding:10px}
+ .ticket-comment-submit{width:100%;justify-content:center}
+}
