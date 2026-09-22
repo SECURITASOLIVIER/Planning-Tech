@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import { presetRange } from '../lib/dateRange'
 import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
-import type { InventoryItem,Profile,Ticket } from '../lib/types'
+import type { Customer,InventoryItem,Profile,Ticket } from '../lib/types'
 import { DetailDrawer } from '../components/DetailDrawer'
 import { notify } from '../lib/notify'
 
@@ -24,12 +24,15 @@ export function HistoryPage(){
  const [search,setSearch]=useState('')
  const [kind,setKind]=useState<HistoryKind>('all')
  const [technician,setTechnician]=useState('')
+ const [requester,setRequester]=useState('')
+ const [customer,setCustomer]=useState('')
  const [selected,setSelected]=useState<SelectedDetail>(null)
 
  const until=useMemo(()=>new Date(new Date(to+'T00:00:00').getTime()+86400000).toISOString(),[to])
 
  const {data:tickets=[]}=useQuery({queryKey:['history-tickets'],queryFn:async()=>{const {data,error}=await supabase.from('tickets').select('*').order('created_at',{ascending:false});if(error)throw error;return data as Ticket[]}})
  const {data:profiles=[]}=useQuery({queryKey:['history-profiles'],queryFn:async()=>{const {data,error}=await supabase.from('profiles').select('*').order('display_name');if(error)throw error;return data as Profile[]}})
+ const {data:customers=[]}=useQuery({queryKey:['history-customers'],queryFn:async()=>{const {data,error}=await supabase.from('customers').select('*').order('name');if(error)throw error;return data as Customer[]}})
  const {data:items=[]}=useQuery({queryKey:['history-inventory'],queryFn:async()=>{const {data,error}=await supabase.from('inventory_items').select('*').order('model');if(error)throw error;return data as InventoryItem[]}})
  const {data:ticketHistory=[]}=useQuery({queryKey:['ticket-history-all',from,to],queryFn:async()=>{const {data,error}=await supabase.from('ticket_history').select('*').gte('created_at',from+'T00:00:00').lt('created_at',until).order('created_at',{ascending:false}).limit(3000);if(error)throw error;return data||[]}})
  const {data:movements=[]}=useQuery({queryKey:['stock-history-all',from,to],queryFn:async()=>{const {data,error}=await supabase.from('inventory_movements').select('*').gte('created_at',from+'T00:00:00').lt('created_at',until).order('created_at',{ascending:false}).limit(3000);if(error)throw error;return data||[]}})
@@ -38,23 +41,48 @@ export function HistoryPage(){
 
  const q=search.trim().toLowerCase()
  const actorName=(id:string|null)=>profiles.find(p=>p.id===id)?.display_name||id||'Système'
+ const clientName=(id:string|null|undefined)=>customers.find(c=>c.id===id)?.name||'—'
+ const requesters=useMemo(()=>[...new Set(tickets.map(t=>t.requester).filter((x):x is string=>!!x?.trim()))].sort((a,b)=>a.localeCompare(b,'fr')),[tickets])
+ const ticketMatches=(t:Ticket|undefined)=>{
+  if(!t)return !(technician||requester||customer)
+  if(technician&&t.assigned_to!==technician)return false
+  if(requester&&t.requester!==requester)return false
+  if(customer&&t.customer_id!==customer)return false
+  return true
+ }
  const historyRows=useMemo(()=>ticketHistory.filter((h:any)=>{
   const t=tickets.find(x=>x.id===h.ticket_id),actor=profiles.find(x=>x.id===h.actor_id)
-  if(technician&&t?.assigned_to!==technician&&h.actor_id!==technician)return false
-  return !q||(t?.ticket_number+' '+t?.subject+' '+h.action+' '+actor?.display_name+' '+JSON.stringify(h.details||{})).toLowerCase().includes(q)
- }),[ticketHistory,tickets,profiles,q,technician])
+  if(!ticketMatches(t))return false
+  return !q||(t?.ticket_number+' '+t?.subject+' '+(t?.requester||'')+' '+clientName(t?.customer_id)+' '+h.action+' '+actor?.display_name+' '+JSON.stringify(h.details||{})).toLowerCase().includes(q)
+ }),[ticketHistory,tickets,profiles,q,technician,requester,customer,customers])
  const movementRows=useMemo(()=>movements.filter((m:any)=>{
   const item=items.find(x=>x.id===m.item_id)
-  if(technician&&m.actor_id!==technician)return false
-  return !q||((item?.manufacturer||'')+' '+(item?.model||'')+' '+(item?.reference||'')+' '+(m.ticket_number_snapshot||'')+' '+(m.reason||'')+' '+m.movement_type+' '+actorName(m.actor_id)).toLowerCase().includes(q)
- }),[movements,items,q,technician,profiles])
+  const t=tickets.find(x=>x.id===m.ticket_id)
+  if((technician||requester||customer)&&!ticketMatches(t))return false
+  return !q||((item?.manufacturer||'')+' '+(item?.model||'')+' '+(item?.reference||'')+' '+(m.ticket_number_snapshot||'')+' '+(t?.requester||'')+' '+clientName(t?.customer_id)+' '+(m.reason||'')+' '+m.movement_type+' '+actorName(m.actor_id)).toLowerCase().includes(q)
+ }),[movements,items,q,technician,requester,customer,profiles,tickets,customers])
  const actionRows=useMemo(()=>audit.filter((a:any)=>{
-  if(technician&&a.actor_id!==technician)return false
-  return !q||(a.action+' '+a.target_type+' '+(a.target_id||'')+' '+(a.actor_name||'')+' '+JSON.stringify(a.details||{})).toLowerCase().includes(q)
- }),[audit,q,technician])
+  const targetTicket=(a.target_type==='tickets'||a.target_type==='ticket')?tickets.find(t=>t.id===a.target_id):undefined
+  if(technician||requester||customer){
+   if(targetTicket){if(!ticketMatches(targetTicket))return false}
+   else{
+    if(requester||customer)return false
+    if(technician&&a.actor_id!==technician)return false
+   }
+  }
+  return !q||(a.action+' '+a.target_type+' '+(a.target_id||'')+' '+(a.actor_name||'')+' '+(targetTicket?.ticket_number||'')+' '+(targetTicket?.requester||'')+' '+clientName(targetTicket?.customer_id)+' '+JSON.stringify(a.details||{})).toLowerCase().includes(q)
+ }),[audit,q,technician,requester,customer,tickets,customers])
 
  const summary=kpi?.summary||{}
  const byTech=kpi?.by_technician||[]
+ const filteredTicketIds=useMemo(()=>{
+  const ids=new Set<string>()
+  if(kind==='all'||kind==='tickets')historyRows.forEach((h:any)=>ids.add(h.ticket_id))
+  if(kind==='all'||kind==='stock')movementRows.forEach((m:any)=>{if(m.ticket_id)ids.add(m.ticket_id)})
+  if(manager&&(kind==='all'||kind==='actions'))actionRows.forEach((a:any)=>{if((a.target_type==='tickets'||a.target_type==='ticket')&&a.target_id)ids.add(a.target_id)})
+  return ids
+ },[kind,historyRows,movementRows,actionRows,manager])
+ const detailedTickets=useMemo(()=>tickets.filter(t=>filteredTicketIds.has(t.id)),[tickets,filteredTicketIds])
  const resultCount=(kind==='all'||kind==='tickets'?historyRows.length:0)+(kind==='all'||kind==='stock'?movementRows.length:0)+(manager&&(kind==='all'||kind==='actions')?actionRows.length:0)
 
  const exportExcel=()=>{
@@ -65,8 +93,16 @@ export function HistoryPage(){
   }))
   if(kind==='all'||kind==='stock')addSheet(wb,'Mouvements Stock',movementRows.map((m:any)=>{const i=items.find(x=>x.id===m.item_id);return {id:m.id,date:excelDate(m.created_at),item_id:m.item_id,categorie:i?.category||'',constructeur:i?.manufacturer||'',modele:i?.model||'',reference:i?.reference||'',emplacement:i?.location||'',mouvement:m.movement_type,quantite:m.quantity,ancien_total:m.old_total,nouveau_total:m.new_total,ticket_id:m.ticket_id||'',ticket:m.ticket_number_snapshot||'',allocation_id:m.allocation_id||'',beneficiaire:m.assignee||'',acteur_id:m.actor_id||'',acteur:actorName(m.actor_id),motif:m.reason||'',note:m.note||''}}))
   if(manager&&(kind==='all'||kind==='actions'))addSheet(wb,'Journal Actions',actionRows.map((a:any)=>({id:a.id,date:excelDate(a.created_at),acteur_id:a.actor_id||'',acteur:a.actor_name||actorName(a.actor_id),action:a.action,cible_type:a.target_type,cible_id:a.target_id||'',details:JSON.stringify(a.details||{})})))
+  addSheet(wb,'Tickets détaillés',detailedTickets.map(t=>({
+   id:t.id,numero_ticket:t.ticket_number,titre:t.subject,demandeur:t.requester||'',client_id:t.customer_id||'',client:clientName(t.customer_id),
+   customer_contact_id:t.customer_contact_id||'',description:t.description||'',categorie:t.category,type:t.intervention_type,statut:t.status,priorite:t.priority,
+   technicien_id:t.assigned_to||'',technicien:actorName(t.assigned_to),date_arrivee:excelDate(t.arrival_at),debut_planifie:excelDate(t.planned_start),
+   fin_planifie:excelDate(t.planned_end),incident_bloquant:t.is_blocking?'Oui':'Non',incident_parent:t.parent_incident||'',
+   incident_general:t.general_incident_label||'',commentaire_resolution:t.resolution_comment||'',closed_by:t.closed_by||'',cloture_le:excelDate(t.closed_at),
+   created_by:t.created_by||'',auteur_creation:actorName(t.created_by),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
+  })))
   if(manager){addSheet(wb,'KPI Synthese',[{du:from,au:to,ouverts:summary.backlog||0,nouveaux:summary.new_count||0,en_cours:summary.in_progress||0,en_attente:summary.waiting||0,bloquants:summary.blocking||0,clotures:summary.closed||0,crees:summary.created||0,taux_cloture:summary.closure_rate||0}]);addSheet(wb,'KPI Techniciens',byTech)}
-  addSheet(wb,'Filtres',[{du:from,au:to,type:kind,recherche:search||'',technicien:technician?actorName(technician):'Tous',resultats:resultCount}])
+  addSheet(wb,'Filtres',[{du:from,au:to,type:kind,recherche:search||'',technicien:technician?actorName(technician):'Tous',demandeur:requester||'Tous',client:customer?clientName(customer):'Tous',resultats:resultCount,tickets_distincts:detailedTickets.length}])
   downloadWorkbook(wb,'PlanningSecuritas_Historique_'+from+'_'+to+'.xlsx');notify('Export Historique téléchargé.')
  }
 
@@ -84,13 +120,13 @@ export function HistoryPage(){
    <div className="module-filter-title"><HistoryIcon size={16}/><b>Période & filtres</b><span>{resultCount} résultat(s)</span></div>
    <div className="module-tabs history-presets history-view-tabs"><button className={kind==='all'?'primary':'ghost'} onClick={()=>setKind('all')}>Tout</button><button className={kind==='tickets'?'primary':'ghost'} onClick={()=>setKind('tickets')}>Tickets</button><button className={kind==='stock'?'primary':'ghost'} onClick={()=>setKind('stock')}>Stock</button>{manager&&<button className={kind==='actions'?'primary':'ghost'} onClick={()=>setKind('actions')}>Actions</button>}</div>
    <div className="module-tabs history-presets"><button className="ghost" onClick={()=>preset('today')}>Aujourd’hui</button><button className="ghost" onClick={()=>preset('7d')}>7 jours</button><button className="ghost" onClick={()=>preset('month')}>Mois</button><button className="ghost" onClick={()=>preset('year')}>Année</button></div>
-   <div className="module-filter-grid history-filters"><label>Du<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>Au<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>{manager&&<label>Technicien<select value={technician} onChange={e=>setTechnician(e.target.value)}><option value="">Tous</option>{profiles.filter(p=>p.active).map(p=><option value={p.id} key={p.id}>{p.display_name}</option>)}</select></label>}<label className="wide-filter">Recherche<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ticket, matériel, action, motif, technicien…"/></label></div>
+   <div className="module-filter-grid history-filters"><label>Du<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label><label>Au<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>{manager&&<label>Technicien<select value={technician} onChange={e=>setTechnician(e.target.value)}><option value="">Tous</option>{profiles.map(p=><option value={p.id} key={p.id}>{p.display_name}{p.active?'':' (inactif)'}</option>)}</select></label>}<label>Demandeur<select value={requester} onChange={e=>setRequester(e.target.value)}><option value="">Tous</option>{requesters.map(x=><option value={x} key={x}>{x}</option>)}</select></label><label>Client<select value={customer} onChange={e=>setCustomer(e.target.value)}><option value="">Tous</option>{customers.map(c=><option value={c.id} key={c.id}>{c.name}{c.active?'':' (inactif)'}</option>)}</select></label><label className="wide-filter">Recherche<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ticket, demandeur, client, matériel, action, motif…"/></label></div>
   </section>
 
   {manager&&<section className="grid four kpi-grid clickable-kpis"><button className="kpi kpi-button" onClick={()=>setKind('tickets')}><b>{summary.backlog??0}</b><span>Tickets ouverts</span></button><button className="kpi kpi-button" onClick={()=>setKind('tickets')}><b>{summary.in_progress??0}</b><span>En cours</span></button><button className="kpi kpi-button" onClick={()=>setKind('tickets')}><b>{summary.waiting??0}</b><span>En attente</span></button><button className="kpi kpi-button good" onClick={()=>setKind('tickets')}><b>{summary.closed??0}</b><span>Clôturés période</span></button></section>}
 
   {selected&&<DetailDrawer title={selected.kind==='ticket'?'Événement ticket':selected.kind==='stock'?'Mouvement de stock':'Journal d’action'} subtitle="Détail complet" onClose={()=>setSelected(null)}>
-   {selected.kind==='ticket'&&<div className="detail-summary-grid"><div><span>Ticket</span><b>{tickets.find(t=>t.id===selected.row.ticket_id)?.ticket_number||selected.row.ticket_id}</b></div><div><span>Action</span><b>{selected.row.action}</b></div><div><span>Acteur</span><b>{actorName(selected.row.actor_id)}</b></div><div><span>Date</span><b>{excelDate(selected.row.created_at)}</b></div></div>}
+   {selected.kind==='ticket'&&(()=>{const t=tickets.find(x=>x.id===selected.row.ticket_id);return <><div className="detail-summary-grid"><div><span>Ticket</span><b>{t?.ticket_number||selected.row.ticket_id}</b></div><div><span>Action</span><b>{selected.row.action}</b></div><div><span>Acteur</span><b>{actorName(selected.row.actor_id)}</b></div><div><span>Date action</span><b>{excelDate(selected.row.created_at)}</b></div><div><span>Demandeur</span><b>{t?.requester||'—'}</b></div><div><span>Client</span><b>{clientName(t?.customer_id)}</b></div><div><span>Technicien</span><b>{actorName(t?.assigned_to||null)}</b></div><div><span>Statut</span><b>{t?.status||'—'}</b></div><div><span>Priorité</span><b>{t?.priority||'—'}</b></div><div><span>Planifié</span><b>{excelDate(t?.planned_start)||'—'}</b></div></div>{t?.description&&<div className="detail-description">{t.description}</div>}</>})()}
    {selected.kind==='stock'&&(()=>{const i=items.find(x=>x.id===selected.row.item_id);return <div className="detail-summary-grid"><div><span>Matériel</span><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||selected.row.item_id}</b></div><div><span>Référence</span><b>{i?.reference||'—'}</b></div></div>})()}
    <div className="detail-key-values">{detailEntries.map(([key,value])=><div key={key}><span>{prettyKey(key)}</span><b>{typeof value==='object'?JSON.stringify(value):String(value??'—')}</b></div>)}</div>
   </DetailDrawer>}
