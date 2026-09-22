@@ -173,3 +173,39 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .module-mobile-actions button{font-size:9px;padding:7px 6px}
  .module-mobile-meta{grid-template-columns:1fr 1fr}
 }
+
+/* Inventory movements */
+.inventory-tabs button{display:flex;align-items:center;gap:6px}
+.inventory-movement-actions{grid-template-columns:repeat(4,minmax(0,1fr))}
+.inventory-movement-actions button{display:flex;align-items:center;justify-content:center;gap:5px}
+.movement-form{margin:10px 0;padding:10px;box-shadow:none;background:#f8fbfe}
+.movement-form textarea{min-height:80px}
+
+/* Communication center */
+.communication-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:10px;align-items:start}
+.communication-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:8px;cursor:pointer;box-shadow:0 6px 18px rgba(5,27,58,.05);transition:.15s ease;min-width:0}
+.communication-card:hover{transform:translateY(-1px);border-color:#9cc8eb;box-shadow:0 10px 24px rgba(5,27,58,.09)}
+.communication-card.selected{border-color:#2f9ae9;box-shadow:0 0 0 2px #2f9ae91f}
+.communication-card-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.communication-card-head>div{min-width:0;display:grid;gap:3px}
+.communication-card-head b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.communication-card-head small{font-size:9px;color:var(--muted)}
+.communication-subject{font-size:10px;font-weight:850;color:#254b6e;background:#f3f8fc;border:1px solid #e3edf5;border-radius:8px;padding:7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.communication-card p{font-size:10px;line-height:1.45;color:#566f85;margin:0;white-space:pre-line}
+.communication-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+.communication-card-actions button{display:flex;align-items:center;gap:5px}
+.communication-detail-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:9px}
+.communication-detail-actions button{display:flex;align-items:center;justify-content:center;gap:5px;font-size:10px;padding:8px 6px}
+.full-width-danger{width:100%;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:8px}
+.communications-page .detail-form textarea{min-height:210px;line-height:1.45}
+
+@media(max-width:640px){
+ .inventory-movement-actions{grid-template-columns:1fr 1fr}
+ .inventory-movement-actions button{font-size:9px;padding:7px 5px}
+ .movement-form{padding:9px}
+ .communication-grid{grid-template-columns:1fr;gap:7px}
+ .communication-card{padding:10px}
+ .communication-card-head b{font-size:12px}
+ .communication-detail-actions{grid-template-columns:1fr 1fr}
+ .communications-page .detail-form textarea{min-height:180px}
+}
