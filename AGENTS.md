@@ -1,4 +1,4 @@
-# AGENTS.md — Super Support IT / Planning-Tech
+# AGENTS.md — Planning Securitas / Planning-Tech
 
 ## Contexte
 Ce dépôt héberge une application web ITSM/planning sur GitHub Pages.
@@ -10,7 +10,7 @@ Frontend :
 - `setup.html`
 
 Backend :
-- Supabase project: `super-support-it`
+- Supabase project: `planning-securitas`
 - Project ref: `ilxdqvbcvcwfklvkyfoj`
 - Auth: Supabase Auth email/password
 - Base PostgreSQL avec RLS
