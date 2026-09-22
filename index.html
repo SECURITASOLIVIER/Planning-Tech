@@ -22,17 +22,11 @@
           <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0b3b76;color:white;font-size:20px">M</div>
           <div><b style="font-size:18px">Accès Manager</b><div class="muted" style="font-size:11px">Tous les tickets, utilisateurs, KPI, configuration et export Excel</div></div>
         </div>
-        <form id="managerLoginForm">
+        <form id="managerLoginForm" novalidate>
           <div class="field"><label>Email Manager</label><input id="managerEmail" class="input" type="email" value="olivier.marchegay@securitas.fr" required autocomplete="username"></div>
-          <div class="field"><label>Mot de passe</label><input id="managerPassword" class="input" type="password" required autocomplete="current-password"></div>
+          <div class="field"><label>Mot de passe</label><input id="managerPassword" class="input" type="password" autocomplete="current-password" placeholder="Saisis ton mot de passe"><div id="managerPasswordError" class="muted" style="display:none;color:#b42318;font-weight:800;margin-top:6px">Mot de passe requis.</div></div>
           <button id="managerLoginBtn" class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
         </form>
-
-        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dce6f1">
-          <a href="./first-manager.html" class="btn success" style="display:block;text-align:center;text-decoration:none;width:100%;padding:12px">
-            Première connexion ? Créer le compte Manager
-          </a>
-        </div>
       </div>
 
       <div class="accessCard" style="border:1px solid #dce6f1;border-radius:16px;padding:16px;background:#fbfdff">
@@ -300,9 +294,21 @@ if(!window.supabase){
   if(mf){
     mf.onsubmit=function(e){
       e.preventDefault();
-      directLogin('manager',
-        document.getElementById('managerEmail').value,
-        document.getElementById('managerPassword').value);
+      const email=document.getElementById('managerEmail').value.trim();
+      const password=document.getElementById('managerPassword').value;
+      const passErr=document.getElementById('managerPasswordError');
+      if(!email){
+        show('Email Manager requis.');
+        return false;
+      }
+      if(!password){
+        if(passErr)passErr.style.display='block';
+        show('Mot de passe requis : saisis ton mot de passe Manager avant de cliquer.');
+        document.getElementById('managerPassword').focus();
+        return false;
+      }
+      if(passErr)passErr.style.display='none';
+      directLogin('manager',email,password);
       return false;
     };
   }
@@ -315,7 +321,7 @@ if(!window.supabase){
       return false;
     };
   }
-  show('Connexion prête.');
+  show('Compte Manager détecté. Saisis ton mot de passe puis clique sur Entrer en Manager.');
 })();
 </script>
 </body>
