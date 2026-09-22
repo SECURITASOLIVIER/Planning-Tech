@@ -14,9 +14,9 @@
       <div class="dots"><i></i><i></i><i></i></div>
       <div><h1>Créer le premier Manager</h1><p>Page d'installation dédiée.</p></div>
     </div>
-    <div class="notice">Cette page fonctionne uniquement tant qu'aucun Manager n'a encore été créé.</div>
+    <div class="notice">Crée ici ton premier compte Manager. Aucun code initial n’est nécessaire.</div>
     <form id="setupOnlyForm">
-      <div class="field"><label>Code initial</label><input id="code" class="input" required></div>
+      
       <div class="field"><label>Nom affiché</label><input id="name" class="input" required></div>
       <div class="field"><label>Email Manager</label><input id="email" class="input" type="email" required></div>
       <div class="field"><label>Mot de passe</label><input id="password" class="input" type="password" minlength="10" required></div>
@@ -41,7 +41,6 @@ form.addEventListener('submit',async e=>{
  btn.disabled=true;btn.textContent='Création en cours...';
  try{
   const body={
-   bootstrap:document.getElementById('code').value.trim(),
    email:document.getElementById('email').value.trim(),
    password:document.getElementById('password').value,
    display_name:document.getElementById('name').value.trim()
