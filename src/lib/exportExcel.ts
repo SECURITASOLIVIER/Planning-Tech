@@ -48,12 +48,13 @@ export async function exportManagerWorkbook(from:string,to:string){
   technicien:profileName(t.assigned_to),technicien_id:t.assigned_to||'',arrivee:excelDate(t.arrival_at),
   debut_planifie:excelDate(t.planned_start),fin_planifie:excelDate(t.planned_end),bloquant:t.is_blocking?'Oui':'Non',
   incident_parent:t.parent_incident||'',incident_general:t.general_incident_label||'',resolution:t.resolution_comment||'',
+  cout_intervention:Number(t.intervention_cost||0),note_cout_intervention:t.intervention_cost_note||'',
   cloture:excelDate(t.closed_at),auteur:profileName(t.created_by),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
  })))
  addSheet(wb,'Planning',periodTickets.filter((t:any)=>t.planned_start).map((t:any)=>({
   ticket:t.ticket_number,titre:t.subject,client:clientName(t.customer_id),technicien:profileName(t.assigned_to),
   debut:excelDate(t.planned_start),fin:excelDate(t.planned_end),statut:t.status,priorite:t.priority,categorie:t.category,type:t.intervention_type,
-  demandeur:t.requester||'',bloquant:t.is_blocking?'Oui':'Non',description:t.description||''
+  demandeur:t.requester||'',bloquant:t.is_blocking?'Oui':'Non',description:t.description||'',cout_intervention:Number(t.intervention_cost||0),note_cout_intervention:t.intervention_cost_note||''
  })))
  addSheet(wb,'Commentaires',comments.map((c:any)=>({
   ticket:tickets.find((t:any)=>t.id===c.ticket_id)?.ticket_number||c.ticket_id,
@@ -71,6 +72,7 @@ export async function exportManagerWorkbook(from:string,to:string){
  })))
  addSheet(wb,'Mouvements stock',movements.map((m:any)=>({
   id:m.id,date:excelDate(m.created_at),materiel:itemName(m.item_id),item_id:m.item_id,type:m.movement_type,quantite:m.quantity,
+  prix_unitaire_snapshot:Number(m.unit_price_snapshot||0),cout_total_snapshot:Number(m.total_cost_snapshot||0),
   ancien_total:m.old_total,nouveau_total:m.new_total,ticket:m.ticket_number_snapshot||'',ticket_id:m.ticket_id||'',
   beneficiaire:m.assignee||'',acteur:profileName(m.actor_id)||m.actor_id||'',motif:m.reason||'',note:m.note||''
  })))
