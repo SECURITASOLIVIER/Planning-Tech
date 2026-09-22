@@ -12,6 +12,7 @@ import { KpiPage } from './pages/KpiPage'
 import { ConfigPage } from './pages/ConfigPage'
 import { AuditPage } from './pages/AuditPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
+import { CommunicationsPage } from './pages/CommunicationsPage'
 
 function Guard({manager=false}:{manager?:boolean}){
  const {session,profile,loading}=useAuth()
@@ -30,6 +31,7 @@ export default function App(){
    <Route path="planning" element={<PlanningPage/>}/>
    <Route path="tickets" element={<TicketsPage/>}/>
    <Route path="inventory" element={<InventoryPage/>}/>
+   <Route path="communications" element={<CommunicationsPage/>}/>
   </Route>
   <Route element={<Guard manager/>}>
    <Route path="users" element={<UsersPage/>}/>
