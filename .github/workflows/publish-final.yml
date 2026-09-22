@@ -1,0 +1,64 @@
+name: Publish Planning Securitas Final
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout validated V2 source
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/react-v1
+          path: source
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        working-directory: source
+        run: npm install
+
+      - name: Test
+        working-directory: source
+        run: npm test
+
+      - name: Build
+        working-directory: source
+        run: npm run build
+
+      - name: Checkout production branch
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: publish
+
+      - name: Replace production frontend
+        run: |
+          rm -rf publish/assets
+          rm -f publish/app.js publish/app-v2.js publish/app-v3.js publish/app.css
+          cp -R source/dist/. publish/
+          touch publish/.nojekyll
+
+      - name: Commit final version
+        working-directory: publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Production already up to date"
+            exit 0
+          fi
+          git commit -m "Publish Planning Securitas final"
+          git push origin main
