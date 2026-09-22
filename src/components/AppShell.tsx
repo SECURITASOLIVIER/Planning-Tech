@@ -1,5 +1,5 @@
 import { NavLink,Outlet } from 'react-router-dom'
-import { Activity,Boxes,CalendarDays,ClipboardList,FileClock,Gauge,LogOut,Settings,Users,Building2,MessageSquareText,TimerReset } from 'lucide-react'
+import { Activity,Boxes,CalendarDays,ClipboardList,FileClock,Gauge,LogOut,Settings,Users,Building2,MessageSquareText } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 
 const item=(to:string,label:string,Icon:React.ComponentType<{size?:number}>)=>({to,label,Icon})
@@ -12,15 +12,14 @@ export function AppShell(){
   item('/planning','Planning',CalendarDays),
   item('/tickets','Tickets',ClipboardList),
   item('/communications','Communications',MessageSquareText),
-  item('/activity','Activité',TimerReset),
+  item('/history','Historique',FileClock),
   ...(manager?[
    item('/clients','Clients',Building2),
    item('/users','Utilisateurs',Users),
    item('/inventory','Inventaire',Boxes),
    item('/kpi','KPI & activité',Activity),
    item('/configuration','Configuration',Settings),
-   item('/audit','Audit',FileClock)
-  ]:[item('/inventory','Matériel',Boxes)])
+   ]:[item('/inventory','Matériel',Boxes)])
  ]
  return <div className="workspace">
   <header className="topbar">
