@@ -352,3 +352,76 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .history-presets{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible}
  .history-presets button{font-size:9px;padding:7px 3px}
 }
+
+/* Global confirmations */
+.toast-host{position:fixed;right:16px;top:78px;z-index:10000;display:grid;gap:8px;max-width:min(360px,calc(100vw - 24px));pointer-events:none}
+.toast{display:flex;align-items:flex-start;gap:8px;background:#fff;border:1px solid #dbe6ef;border-left:4px solid #1583d8;border-radius:11px;padding:10px 12px;box-shadow:0 14px 40px rgba(3,20,43,.18);font-size:11px;font-weight:750;color:#173b5d}
+.toast.success{border-left-color:#00a46f}.toast.error{border-left-color:#d92d45}.toast.info{border-left-color:#1583d8}
+.toast.success svg{color:#00a46f}.toast.error svg{color:#d92d45}.toast.info svg{color:#1583d8}
+
+/* Instant detail drawer */
+.drawer-backdrop{position:fixed;inset:0;z-index:9000;background:rgba(4,18,38,.34);display:flex;justify-content:flex-end;backdrop-filter:blur(2px)}
+.detail-drawer{width:min(520px,94vw);height:100%;background:#fff;box-shadow:-16px 0 50px rgba(3,20,43,.22);display:flex;flex-direction:column;overflow:hidden}
+.drawer-head{padding:14px 14px 10px;border-bottom:1px solid #e4ecf4;display:flex;align-items:flex-start;justify-content:space-between;gap:10px;background:linear-gradient(180deg,#fafdff,#f5f9fd)}
+.drawer-head small{display:block;font-size:8px;font-weight:900;text-transform:uppercase;letter-spacing:.07em;color:#6a8095}
+.drawer-head h2{font-size:18px;margin:3px 0 0;color:#112f4f}
+.drawer-body{padding:12px;overflow:auto;-webkit-overflow-scrolling:touch}
+.drawer-list{display:grid;gap:6px}
+.drawer-list-row{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;background:#fbfdff;border:1px solid #e3ebf3;border-radius:10px;padding:9px;color:inherit;cursor:pointer}
+.drawer-list-row:hover,.drawer-list-row.selected{background:#edf7ff;border-color:#83bfea}
+.drawer-list-row>div{min-width:0;display:grid;gap:2px}.drawer-list-row b{font-size:11px}.drawer-list-row small{font-size:8px;color:#6a8095}
+.drawer-selected-detail{border:1px solid #cfe3f3;background:#f8fcff;border-radius:12px;padding:10px;margin-bottom:10px}
+.drawer-selected-detail h3{font-size:14px;margin:0 0 9px}
+.detail-drawer .detail-summary-grid{grid-template-columns:1fr 1fr}
+.detail-drawer .detail-key-values{grid-template-columns:1fr 1fr}
+.compact-history{border:1px solid #e5edf4;border-radius:9px;background:#fafcff}
+.compact-history summary{list-style:none;cursor:pointer;padding:8px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.compact-history summary::-webkit-details-marker{display:none}
+.compact-history summary b{font-size:10px}.compact-history summary small{font-size:8px;color:#6a8095}
+.compact-history pre{margin:0;border-top:1px solid #e8eef4;padding:8px;font-family:inherit;font-size:8px;white-space:pre-wrap;overflow-wrap:anywhere;color:#526a80}
+.compact-history .detail-key-values{padding:8px;border-top:1px solid #e8eef4}
+
+/* Outlook-like planning */
+.tech-color-dot{width:8px;height:34px;border-radius:999px;flex:0 0 auto}
+.planning-event-row{grid-template-columns:auto minmax(0,1fr) auto}
+.calendar-viewport{width:100%;overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;overscroll-behavior-inline:contain;padding-bottom:4px}
+.calendar-canvas{min-width:100%}
+.calendar-viewport.view-timeGridThreeDay .calendar-canvas{min-width:660px}
+.calendar-viewport.view-timeGridWeek .calendar-canvas{min-width:1080px}
+.calendar-viewport.view-dayGridMonth .calendar-canvas{min-width:820px}
+.fc .fc-timegrid-event-harness{margin-right:1px}
+.fc .fc-timegrid-event{border-radius:6px!important;box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.fc .fc-timegrid-event .fc-event-main{padding:2px 4px}
+.fc .fc-daygrid-event{border-radius:6px!important}
+.fc .fc-event-title{font-weight:800}
+.planning-view-tabs{overflow:visible!important}
+.planning-event-list{scrollbar-width:thin}
+
+/* Backup */
+.backup-card{margin-top:12px}
+.backup-head{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.backup-head>div{display:flex;align-items:flex-start;gap:9px}
+.backup-head h3{margin:0}.backup-head p{margin:3px 0 0;max-width:760px}
+
+/* Dense history */
+.history-view-tabs{margin-bottom:6px}
+.history-page .module-mobile-list{max-height:68vh;overflow:auto;-webkit-overflow-scrolling:touch}
+.history-page .table-wrap{max-height:68vh;overflow:auto}
+.history-page .table-wrap thead{position:sticky;top:0;z-index:2;background:#f7fafd}
+
+@media(max-width:640px){
+ .toast-host{left:8px;right:8px;top:62px;max-width:none}
+ .drawer-backdrop{align-items:flex-end;justify-content:stretch}
+ .detail-drawer{width:100%;height:min(88vh,760px);border-radius:18px 18px 0 0}
+ .drawer-head{padding:11px}.drawer-body{padding:10px}
+ .detail-drawer .detail-summary-grid,.detail-drawer .detail-key-values{grid-template-columns:1fr 1fr}
+ .calendar-viewport{margin-left:-8px;margin-right:-8px;width:calc(100% + 16px);padding-left:8px;padding-right:8px}
+ .calendar-viewport.view-timeGridDay .calendar-canvas{min-width:100%}
+ .calendar-viewport.view-timeGridThreeDay .calendar-canvas{min-width:660px}
+ .calendar-viewport.view-timeGridWeek .calendar-canvas{min-width:1120px}
+ .calendar-viewport.view-dayGridMonth .calendar-canvas{min-width:850px}
+ .planning-view-tabs{grid-template-columns:repeat(4,1fr)!important}
+ .planning-view-tabs button{font-size:9px!important}
+ .backup-head{display:grid}.backup-head button{width:100%}
+ .history-page .module-mobile-list{max-height:60vh}
+}
