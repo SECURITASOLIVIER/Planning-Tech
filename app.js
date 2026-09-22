@@ -83,19 +83,21 @@ function bindAuth(){
   const submit=$('setupSubmit')
   submit.disabled=true;submit.textContent='Création...'
   try{
-   const body={
-    bootstrap:$('setupCode').value.trim(),
-    email:$('setupEmail').value.trim(),
-    password:$('setupPassword').value,
-    display_name:$('setupName').value.trim()
-   }
-   const {data,error}=await supabase.functions.invoke('bootstrap-manager',{body})
+   const email=$('setupEmail').value.trim().toLowerCase()
+   const password=$('setupPassword').value
+   const displayName=$('setupName').value.trim()
+   const {data,error}=await supabase.auth.signUp({
+    email,
+    password,
+    options:{data:{display_name:displayName}}
+   })
    if(error){toast('Création impossible : '+error.message);return}
-   if(data?.error){toast(data.error);return}
-   toast('Compte Manager créé. Connexion en cours...')
-   const sign=await supabase.auth.signInWithPassword({email:body.email,password:body.password})
-   if(sign.error){toast('Manager créé. Utilise maintenant Accès Manager.');return}
-   await enterSession(sign.data.session)
+   if(data.session){
+    toast('Compte Manager créé. Connexion en cours...')
+    await enterSession(data.session)
+   }else{
+    toast('Compte créé. Vérifie ton email de confirmation puis utilise Accès Manager.')
+   }
   } finally {
    submit.disabled=false;submit.textContent='Créer mon premier compte Manager'
   }
