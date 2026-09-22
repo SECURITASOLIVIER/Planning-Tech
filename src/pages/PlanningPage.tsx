@@ -120,8 +120,8 @@ export function PlanningPage(){
   calendarRef.current?.getApi().changeView(view)
  }
 
- const techName=(id:string|null)=>profiles.find(p=>p.id===id)?.display_name||'Non affecté'
- const customerName=(id:string|null)=>customers.find(c=>c.id===id)?.name||'—'
+ const techName=(id:string|null|undefined)=>profiles.find(p=>p.id===id)?.display_name||'Non affecté'
+ const customerName=(id:string|null|undefined)=>customers.find(c=>c.id===id)?.name||'—'
 
  return <div className="page planning-page">
   <header className="page-head">
