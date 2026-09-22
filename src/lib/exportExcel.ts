@@ -10,8 +10,8 @@ export async function exportManagerWorkbook(from:string,to:string){
   supabase.from('inventory_items').select('*').order('category').order('model'),
   supabase.from('inventory_movements').select('*').order('created_at'),
   supabase.from('communication_templates').select('*').order('theme').order('sort_order'),
-  supabase.from('technician_presence').select('*').gte('started_at',from+'T00:00:00').order('started_at'),
-  supabase.from('ticket_worklogs').select('*').gte('started_at',from+'T00:00:00').order('started_at'),
+  supabase.from('technician_presence').select('*').gte('started_at',from+'T00:00:00').lt('started_at',new Date(new Date(to+'T00:00:00').getTime()+86400000).toISOString()).order('started_at'),
+  supabase.from('ticket_worklogs').select('*').gte('started_at',from+'T00:00:00').lt('started_at',new Date(new Date(to+'T00:00:00').getTime()+86400000).toISOString()).order('started_at'),
   supabase.from('audit_events').select('*').order('created_at'),
   supabase.rpc('kpi_dashboard',{p_from:from,p_to:to}),
   supabase.rpc('activity_kpi',{p_from:from,p_to:to,p_technician:null})
