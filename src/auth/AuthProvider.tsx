@@ -21,7 +21,7 @@ export function AuthProvider({children}:{children:React.ReactNode}){
   const {data,error}=await supabase.from('profiles').select('*').eq('id',s.user.id).single()
   if(error||!data){setProfile(null);setLoading(false);return}
   setProfile(data as Profile)
-  supabase.rpc('record_login').then(()=>undefined).catch(()=>undefined)
+  try{await supabase.rpc('record_login')}catch{}
   setLoading(false)
  }
 
