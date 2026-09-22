@@ -447,3 +447,29 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .history-line{padding:8px}
  .history-line b{font-size:9px}.history-line span{font-size:8px}.history-line small{font-size:7px}
 }
+
+/* Planning hour range + true 3-day mobile fit */
+.planning-actions-right{display:flex;align-items:center;justify-content:flex-end;gap:7px;min-width:0}
+.planning-hours-toggle{min-height:38px;border:1px solid #c8dbea;background:#f7fbff;color:#1b5f96;border-radius:9px;padding:7px 10px;display:inline-flex;align-items:center;justify-content:center;gap:6px;font:inherit;font-size:9px;font-weight:900;white-space:nowrap;cursor:pointer}
+.planning-hours-toggle:hover{background:#edf7ff;border-color:#8ec5ec}
+.planning-hours-toggle.active{background:#0f73c9;color:#fff;border-color:#0f73c9}
+.calendar-viewport.view-timeGridDay .calendar-canvas{min-width:100%}
+
+@media(max-width:900px){
+ .planning-actions-right{display:grid;grid-template-columns:1fr auto;width:100%}
+}
+
+@media(max-width:640px){
+ .planning-actions-right{grid-template-columns:1fr;width:100%;gap:6px}
+ .planning-hours-toggle{width:100%;min-height:36px;font-size:10px}
+ .calendar-viewport.view-timeGridThreeDay{overflow-x:hidden}
+ .calendar-viewport.view-timeGridThreeDay .calendar-canvas{min-width:100%!important;width:100%!important}
+ .calendar-viewport.view-timeGridThreeDay .fc{width:100%!important}
+ .calendar-viewport.view-timeGridThreeDay .fc .fc-timegrid-axis{width:28px!important}
+ .calendar-viewport.view-timeGridThreeDay .fc .fc-col-header-cell-cushion{font-size:7px!important;padding:4px 0!important}
+ .calendar-viewport.view-timeGridThreeDay .fc .fc-timegrid-event{font-size:7px!important}
+ .calendar-viewport.view-timeGridThreeDay .fc .fc-timegrid-event .fc-event-main{padding:1px 2px!important}
+ .calendar-viewport.view-timeGridThreeDay .fc .fc-event-title{line-height:1.05!important;overflow-wrap:anywhere}
+ .calendar-viewport.view-timeGridDay{overflow-x:hidden}
+ .calendar-viewport.view-timeGridDay .calendar-canvas{min-width:100%!important;width:100%!important}
+}
