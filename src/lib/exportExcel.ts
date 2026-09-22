@@ -28,5 +28,5 @@ export async function exportManagerWorkbook(from:string,to:string){
  add('Incidents parents',(tickets.data||[]).filter((t:any)=>t.parent_incident).map((t:any)=>({ticket:t.ticket_number,parent:t.parent_incident,incident_general:t.general_incident_label})))
  add('Historique',audit.data||[])
  add('KPI',[{du:from,au:to,...((kpi.data as any)?.summary||{})}])
- XLSX.writeFile(wb,'SuperSupportIT_'+from+'_'+to+'.xlsx')
+ XLSX.writeFile(wb,'PlanningSecuritas_'+from+'_'+to+'.xlsx')
 }
