@@ -4,6 +4,7 @@ import { Clipboard,Copy,Mail,MessageSquareText,Plus,Save,Trash2,X } from 'lucide
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import type { CommunicationTemplate } from '../lib/types'
+import { notify } from '../lib/notify'
 
 export function CommunicationsPage(){
  const {profile}=useAuth()
@@ -39,7 +40,7 @@ export function CommunicationsPage(){
 
  const copyText=async(text:string,label:string)=>{
   await navigator.clipboard.writeText(text)
-  setMessage(label+' copié')
+  setMessage(label+' copié');notify(label+' copié.')
   setTimeout(()=>setMessage(''),1800)
  }
 
@@ -58,16 +59,15 @@ export function CommunicationsPage(){
    theme:t.theme,channel:'Outlook',title:t.title+' - copie',subject:t.subject,body:t.body,
    scope,owner_id:scope==='personal'?profile?.id:null,is_system:false,active:true,sort_order:t.sort_order+1,created_by:profile?.id
   })
-  if(error){alert(error.message);return}
-  await qc.invalidateQueries({queryKey:['communication_templates']})
+  if(error){notify(error.message,'error');return}
+  notify('Modèle dupliqué.');await qc.invalidateQueries({queryKey:['communication_templates']})
  }
 
  const remove=async(t:CommunicationTemplate)=>{
   if(!confirm('Supprimer le modèle "'+t.title+'" ?'))return
   const {error}=await supabase.from('communication_templates').delete().eq('id',t.id)
-  if(error){alert(error.message);return}
-  setSelected(null)
-  await qc.invalidateQueries({queryKey:['communication_templates']})
+  if(error){notify(error.message,'error');return}
+  setSelected(null);notify('Modèle supprimé.');await qc.invalidateQueries({queryKey:['communication_templates']})
  }
 
  const save=async(e:FormEvent<HTMLFormElement>)=>{
@@ -86,14 +86,13 @@ export function CommunicationsPage(){
    active:fd.get('active')==='on',
    created_by:profile?.id
   }
-  if(!row.theme||!row.title||!row.body){alert('Thème, titre et contenu sont obligatoires');return}
+  if(!row.theme||!row.title||!row.body){notify('Thème, titre et contenu sont obligatoires.','error');return}
   const q=selected
    ?supabase.from('communication_templates').update(row).eq('id',selected.id)
    :supabase.from('communication_templates').insert(row)
   const {error}=await q
-  if(error){alert(error.message);return}
-  setSelected(null);setCreating(false)
-  await qc.invalidateQueries({queryKey:['communication_templates']})
+  if(error){notify(error.message,'error');return}
+  setSelected(null);setCreating(false);notify(selected?'Modèle Outlook modifié.':'Modèle Outlook créé.');await qc.invalidateQueries({queryKey:['communication_templates']})
  }
 
  const canEdit=(t:CommunicationTemplate)=>manager||(t.scope==='personal'&&t.owner_id===profile?.id)
