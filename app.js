@@ -1,6 +1,11 @@
 
 const SUPABASE_URL='https://ilxdqvbcvcwfklvkyfoj.supabase.co'
 const SUPABASE_KEY='sb_publishable_7f0bDxce4zdPCr5_4go4Wg_S6wlEPFY'
+if(!window.supabase?.createClient){
+ const box=document.getElementById('authMessage')
+ if(box){box.textContent='Erreur de chargement Supabase. Recharge la page avec Ctrl+F5.';box.classList.remove('hidden')}
+ throw new Error('Supabase JS non chargé')
+}
 const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY)
 
 const S={
@@ -51,21 +56,42 @@ async function enterSession(session){
 }
 function bindAuth(){
  async function loginWithRole(role,email,password){
-  const {data,error}=await supabase.auth.signInWithPassword({email,password})
-  if(error){toast('Identifiants incorrects ou compte inexistant.');return}
-  const {data:profile,error:profileError}=await supabase.from('profiles').select('*').eq('id',data.user.id).single()
-  if(profileError||!profile){
-   await supabase.auth.signOut();toast('Profil utilisateur introuvable.');return
+  const msg=$('authMessage')
+  if(msg){msg.textContent='Connexion en cours…';msg.classList.remove('hidden')}
+  try{
+   const {data,error}=await supabase.auth.signInWithPassword({email:email.trim().toLowerCase(),password})
+   if(error){
+    if(msg)msg.textContent='Connexion refusée : '+error.message
+    toast('Connexion refusée : '+error.message)
+    return
+   }
+   if(!data?.user||!data?.session){
+    if(msg)msg.textContent='Connexion impossible : aucune session reçue de Supabase.'
+    return
+   }
+   const {data:profile,error:profileError}=await supabase.from('profiles').select('*').eq('id',data.user.id).single()
+   if(profileError||!profile){
+    await supabase.auth.signOut()
+    if(msg)msg.textContent='Connexion réussie, mais le profil applicatif est introuvable : '+(profileError?.message||'profil absent')
+    return
+   }
+   if(!profile.active){
+    await supabase.auth.signOut()
+    if(msg)msg.textContent='Ce compte est désactivé.'
+    return
+   }
+   if(profile.role!==role){
+    await supabase.auth.signOut()
+    if(msg)msg.textContent=role==='manager'?'Ce compte existe mais son rôle n’est pas Manager.':'Ce compte existe mais son rôle n’est pas Technicien.'
+    return
+   }
+   if(msg)msg.textContent='Connexion réussie. Chargement de l’application…'
+   await enterSession(data.session)
+  }catch(err){
+   console.error('LOGIN ERROR',err)
+   if(msg)msg.textContent='Erreur technique : '+(err?.message||err)
+   toast('Erreur technique de connexion')
   }
-  if(!profile.active){
-   await supabase.auth.signOut();toast('Ce compte est désactivé.');return
-  }
-  if(profile.role!==role){
-   await supabase.auth.signOut()
-   toast(role==='manager'?'Ce compte n’est pas un compte Manager.':'Ce compte n’est pas un compte Technicien.')
-   return
-  }
-  await enterSession(data.session)
  }
 
  $('managerLoginForm').addEventListener('submit',async e=>{
@@ -78,7 +104,8 @@ function bindAuth(){
   await loginWithRole('technician',$('techEmail').value.trim(),$('techPassword').value)
  })
 
- $('setupForm').addEventListener('submit',async e=>{
+ const setupForm=$('setupForm')
+ if(setupForm) setupForm.addEventListener('submit',async e=>{
   e.preventDefault()
   const submit=$('setupSubmit')
   submit.disabled=true;submit.textContent='Création...'
@@ -86,19 +113,11 @@ function bindAuth(){
    const email=$('setupEmail').value.trim().toLowerCase()
    const password=$('setupPassword').value
    const displayName=$('setupName').value.trim()
-   const {data,error}=await supabase.auth.signUp({
-    email,
-    password,
-    options:{data:{display_name:displayName}}
-   })
+   const {data,error}=await supabase.auth.signUp({email,password,options:{data:{display_name:displayName}}})
    if(error){toast('Création impossible : '+error.message);return}
-   if(data.session){
-    toast('Compte Manager créé. Connexion en cours...')
-    await enterSession(data.session)
-   }else{
-    toast('Compte créé. Vérifie ton email de confirmation puis utilise Accès Manager.')
-   }
-  } finally {
+   if(data.session){toast('Compte créé. Connexion en cours...');await enterSession(data.session)}
+   else toast('Compte créé. Vérifie ton email de confirmation.')
+  }finally{
    submit.disabled=false;submit.textContent='Créer mon premier compte Manager'
   }
  })
