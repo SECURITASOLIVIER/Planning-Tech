@@ -244,13 +244,13 @@ if(!window.supabase){
   document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
-<script src="./app.js?v=20260922-1822"></script>
+<script src="./app.js?v=20260922-1831"></script>
 <script>
 (function(){
   const box=document.getElementById('authMessage');
   const show=(m)=>{if(box){box.textContent=m;box.classList.remove('hidden')}};
   if(!window.supabase?.createClient){show('Supabase ne se charge pas dans le navigateur.');return}
-  const authClient=window.supabase.createClient(
+  const authClient=window.SSI_SUPABASE || window.supabase.createClient(
     'https://ilxdqvbcvcwfklvkyfoj.supabase.co',
     'sb_publishable_7f0bDxce4zdPCr5_4go4Wg_S6wlEPFY'
   );
