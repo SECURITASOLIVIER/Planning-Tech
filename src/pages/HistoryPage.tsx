@@ -1,12 +1,14 @@
 import { useMemo,useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Download,FileClock,History as HistoryIcon,PackageSearch,X } from 'lucide-react'
+import { Download,FileClock,History as HistoryIcon,PackageSearch } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import { presetRange } from '../lib/dateRange'
 import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
 import type { InventoryItem,Profile,Ticket } from '../lib/types'
+import { DetailDrawer } from '../components/DetailDrawer'
+import { notify } from '../lib/notify'
 
 type HistoryKind='all'|'tickets'|'stock'
 type SelectedDetail={kind:'ticket'|'stock';row:any}|null
@@ -106,7 +108,7 @@ export function HistoryPage(){
    addSheet(wb,'KPI Techniciens',byTech)
   }
   addSheet(wb,'Filtres',[{du:from,au:to,type:kind,recherche:search||'',technicien:technician?actorName(technician):'Tous',historique_tickets:historyRows.length,mouvements_stock:movementRows.length}])
-  downloadWorkbook(wb,'PlanningSecuritas_Historique_'+from+'_'+to+'.xlsx')
+  downloadWorkbook(wb,'PlanningSecuritas_Historique_'+from+'_'+to+'.xlsx');notify('Export Historique téléchargé.')
  }
 
  const preset=(p:'today'|'7d'|'month'|'year')=>{const r=presetRange(p);setFrom(r.from);setTo(r.to)}
@@ -132,7 +134,7 @@ export function HistoryPage(){
 
   <section className="card module-filter-card">
    <div className="module-filter-title"><HistoryIcon size={16}/><b>Période & filtres</b><span>{visibleHistory.length+visibleMovements.length} résultat(s)</span></div>
-   <div className="module-tabs history-presets"><button className="ghost" onClick={()=>preset('today')}>Aujourd’hui</button><button className="ghost" onClick={()=>preset('7d')}>7 jours</button><button className="ghost" onClick={()=>preset('month')}>Mois</button><button className="ghost" onClick={()=>preset('year')}>Année</button></div>
+   <div className="module-tabs history-presets history-view-tabs"><button className={kind==='all'?'primary':'ghost'} onClick={()=>setKind('all')}>Tout</button><button className={kind==='tickets'?'primary':'ghost'} onClick={()=>setKind('tickets')}>Tickets</button><button className={kind==='stock'?'primary':'ghost'} onClick={()=>setKind('stock')}>Stock</button></div><div className="module-tabs history-presets"><button className="ghost" onClick={()=>preset('today')}>Aujourd’hui</button><button className="ghost" onClick={()=>preset('7d')}>7 jours</button><button className="ghost" onClick={()=>preset('month')}>Mois</button><button className="ghost" onClick={()=>preset('year')}>Année</button></div>
    <div className="module-filter-grid history-filters">
     <label>Du<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
     <label>Au<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
@@ -149,8 +151,7 @@ export function HistoryPage(){
    <button className="kpi kpi-button good" onClick={()=>setKind('tickets')}><b>{summary.closed??0}</b><span>Clôturés période</span></button>
   </section>}
 
-  {selected&&<section className="card inline-data-panel">
-   <div className="inline-data-head"><div><small>Détail complet</small><h2>{selected.kind==='ticket'?'Événement ticket':'Mouvement de stock'}</h2></div><button className="ghost small" onClick={()=>setSelected(null)}><X size={15}/></button></div>
+  {selected&&<DetailDrawer title={selected.kind==='ticket'?'Événement ticket':'Mouvement de stock'} subtitle="Détail complet" onClose={()=>setSelected(null)}>
    {selected.kind==='ticket'&&<div className="detail-summary-grid">
     <div><span>Ticket</span><b>{tickets.find(t=>t.id===selected.row.ticket_id)?.ticket_number||selected.row.ticket_id}</b></div>
     <div><span>Action</span><b>{selected.row.action}</b></div>
@@ -159,7 +160,7 @@ export function HistoryPage(){
    </div>}
    {selected.kind==='stock'&&(()=>{const i=items.find(x=>x.id===selected.row.item_id);return <div className="detail-summary-grid"><div><span>Matériel</span><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||selected.row.item_id}</b></div><div><span>Référence</span><b>{i?.reference||'—'}</b></div></div>})()}
    <div className="detail-key-values">{detailEntries.map(([key,value])=><div key={key}><span>{prettyKey(key)}</span><b>{typeof value==='object'?JSON.stringify(value):String(value??'—')}</b></div>)}</div>
-  </section>}
+  </DetailDrawer>}
 
   {manager&&<section className="card"><h3 className="section-title">KPI par technicien</h3><div className="table-wrap desktop-only"><table><thead><tr><th>Technicien</th><th>Ouverts</th><th>Nouveaux</th><th>En cours</th><th>En attente</th><th>Clôturés</th><th>Bloquants</th></tr></thead><tbody>{byTech.map((t:any)=><tr className="clickable-row" key={t.id} onClick={()=>setTechnician(t.id)}><td><b>{t.name}</b></td><td>{t.open}</td><td>{t.new_count}</td><td>{t.in_progress}</td><td>{t.waiting}</td><td>{t.closed}</td><td>{t.blocking}</td></tr>)}</tbody></table></div><div className="module-mobile-list">{byTech.map((t:any)=><article className="module-mobile-card clickable-row" key={t.id} onClick={()=>setTechnician(t.id)}><div className="module-mobile-head"><div><b>{t.name}</b><small>{t.total} ticket(s) sur la période</small></div><span className="badge">{t.open} ouverts</span></div><div className="module-mobile-meta"><div><span>En cours</span><b>{t.in_progress}</b></div><div><span>En attente</span><b>{t.waiting}</b></div><div><span>Clôturés</span><b>{t.closed}</b></div><div><span>Bloquants</span><b>{t.blocking}</b></div></div></article>)}</div></section>}
 
