@@ -11,14 +11,31 @@ export function AppShell(){
   item('/','Dashboard',Gauge),
   item('/planning','Planning',CalendarDays),
   item('/tickets','Tickets',ClipboardList),
-  ...(manager?[item('/clients','Clients',Building2),item('/users','Utilisateurs',Users),item('/inventory','Inventaire',Boxes),item('/kpi','KPI',Activity),item('/configuration','Configuration',Settings),item('/audit','Audit',FileClock)]:[item('/inventory','Matériel',Boxes)])
+  ...(manager?[
+   item('/clients','Clients',Building2),
+   item('/users','Utilisateurs',Users),
+   item('/inventory','Inventaire',Boxes),
+   item('/kpi','KPI & activité',Activity),
+   item('/configuration','Configuration',Settings),
+   item('/audit','Audit',FileClock)
+  ]:[item('/inventory','Matériel',Boxes)])
  ]
- return <div className="app-shell">
-  <aside className="sidebar">
-   <div className="brand"><span className="brand-dots">● ● ●</span><b>SUPER SUPPORT IT</b><small>Planning / ITSM</small></div>
-   <nav>{nav.map(({to,label,Icon})=><NavLink key={to} to={to} end={to==='/' }><Icon size={18}/><span>{label}</span></NavLink>)}</nav>
-   <div className="sidebar-user"><b>{profile?.display_name}</b><small>{manager?'Manager':'Technicien'}</small><button onClick={()=>void signOut()}><LogOut size={16}/>Déconnexion</button></div>
-  </aside>
-  <main className="content"><Outlet/></main>
+ return <div className="workspace">
+  <header className="topbar">
+   <div className="top-dots"><i/><i/><i/></div>
+   <div className="top-brand"><b>Planning Securitas</b><small>Planning ITSM sécurisé</small></div>
+   <div className="top-spacer"/>
+   <div className="top-user"><b>{profile?.display_name}</b><small>{manager?'Manager':'Technicien'}</small></div>
+   <button className="top-logout" onClick={()=>void signOut()}><LogOut size={16}/> Déconnexion</button>
+  </header>
+
+  <div className="app-layout">
+   <aside className="sidebar">
+    <div className="nav-section-label">Workspace</div>
+    <nav>{nav.map(({to,label,Icon})=><NavLink key={to} to={to} end={to==='/' }><span className="nav-icon"><Icon size={17}/></span><span>{label}</span></NavLink>)}</nav>
+    <div className="nav-section-label nav-role-label">{manager?'Accès Manager':'Accès Technicien'}</div>
+   </aside>
+   <main className="content"><Outlet/></main>
+  </div>
  </div>
 }
