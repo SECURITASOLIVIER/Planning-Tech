@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { startOfMonth,format } from 'date-fns'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
+import { exportManagerWorkbook } from '../lib/exportExcel'
 
 export function DashboardPage(){
  const {profile}=useAuth()
@@ -11,6 +12,7 @@ export function DashboardPage(){
  }})
  const s=data?.summary||{}
  return <div className="page"><header className="page-head"><div><h1>Bonjour {profile?.display_name}</h1><p>Vue opérationnelle du support.</p></div></header>
+ <section className="actions">{profile?.role==='manager'&&<button className="secondary" onClick={()=>void exportManagerWorkbook(from,to)}>Exporter Excel</button>}</section>
  <section className="grid four">
   <div className="kpi"><b>{s.created??0}</b><span>Tickets créés ce mois</span></div>
   <div className="kpi good"><b>{s.closed??0}</b><span>Clôturés</span></div>
