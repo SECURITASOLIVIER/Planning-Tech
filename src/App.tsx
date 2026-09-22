@@ -10,7 +10,6 @@ import { ClientsPage } from './pages/ClientsPage'
 import { InventoryPage } from './pages/InventoryPage'
 import { KpiPage } from './pages/KpiPage'
 import { ConfigPage } from './pages/ConfigPage'
-import { AuditPage } from './pages/AuditPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { CommunicationsPage } from './pages/CommunicationsPage'
 import { HistoryPage } from './pages/HistoryPage'
@@ -40,7 +39,6 @@ export default function App(){
    <Route path="clients" element={<ClientsPage/>}/>
    <Route path="kpi" element={<KpiPage/>}/>
    <Route path="configuration" element={<ConfigPage/>}/>
-   <Route path="audit" element={<AuditPage/>}/>
   </Route>
   <Route path="*" element={<Navigate to="/" replace/>}/>
  </Routes>
