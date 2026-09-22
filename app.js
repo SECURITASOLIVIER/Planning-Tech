@@ -94,16 +94,7 @@ function bindAuth(){
   }
  }
 
- $('managerLoginForm').addEventListener('submit',async e=>{
-  e.preventDefault()
-  await loginWithRole('manager',$('managerEmail').value.trim(),$('managerPassword').value)
- })
-
- $('techLoginForm').addEventListener('submit',async e=>{
-  e.preventDefault()
-  await loginWithRole('technician',$('techEmail').value.trim(),$('techPassword').value)
- })
-
+ // Login forms are handled once in index.html to avoid duplicate sign-in/reload races.
  const setupForm=$('setupForm')
  if(setupForm) setupForm.addEventListener('submit',async e=>{
   e.preventDefault()
