@@ -5,7 +5,7 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import frLocale from '@fullcalendar/core/locales/fr'
-import { ChevronLeft,ChevronRight,ClipboardList,Download,History,Package,Search,UserRound } from 'lucide-react'
+import { ChevronLeft,ChevronRight,ClipboardList,Clock3,Download,History,Package,Search,UserRound } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
@@ -30,12 +30,17 @@ export function PlanningPage(){
  const [title,setTitle]=useState('')
  const [visibleStart,setVisibleStart]=useState<Date|null>(null)
  const [visibleEnd,setVisibleEnd]=useState<Date|null>(null)
+ const [fullDay,setFullDay]=useState(()=>localStorage.getItem('planning-hours-mode')==='24h')
 
  useEffect(()=>{
   const onResize=()=>setMobile(window.innerWidth<=640)
   window.addEventListener('resize',onResize)
   return()=>window.removeEventListener('resize',onResize)
  },[])
+
+ useEffect(()=>{
+  localStorage.setItem('planning-hours-mode',fullDay?'24h':'7-19')
+ },[fullDay])
 
  const {data:tickets=[]}=useQuery({queryKey:['tickets'],queryFn:async()=>{const {data,error}=await supabase.from('tickets').select('*').order('planned_start');if(error)throw error;return data as Ticket[]}})
  const {data:profiles=[]}=useQuery({queryKey:['profiles'],queryFn:async()=>{const {data,error}=await supabase.from('profiles').select('*').eq('active',true).order('display_name');if(error)throw error;return data as Profile[]}})
@@ -61,6 +66,14 @@ export function PlanningPage(){
  }),[filtered,visibleStart,visibleEnd])
 
  const selected=tickets.find(t=>t.id===selectedId)||null
+ const outsideWorkingHours=useMemo(()=>visibleTickets.filter(t=>{
+  if(!t.planned_start)return false
+  const startDate=new Date(t.planned_start)
+  const endDate=t.planned_end?new Date(t.planned_end):startDate
+  const startMinutes=startDate.getHours()*60+startDate.getMinutes()
+  const endMinutes=endDate.getHours()*60+endDate.getMinutes()
+  return startMinutes<7*60||endMinutes>19*60||endDate.getDate()!==startDate.getDate()
+ }).length,[visibleTickets])
  const techName=(id:string|null|undefined)=>profiles.find(p=>p.id===id)?.display_name||'Non affecté'
  const customerName=(id:string|null|undefined)=>customers.find(c=>c.id===id)?.name||'—'
  const techColor=(id:string|null|undefined)=>{
@@ -97,7 +110,7 @@ export function PlanningPage(){
    incident_parent:t.parent_incident||'',incident_general:t.general_incident_label||'',resolution:t.resolution_comment||'',date_cloture:excelDate(t.closed_at),
    cree_par:t.created_by||'',date_creation:excelDate(t.created_at),date_modification:excelDate(t.updated_at),customer_id:t.customer_id||'',customer_contact_id:t.customer_contact_id||''
   })))
-  addSheet(wb,'Filtres',[{vue:calendarView,periode:title,technicien:tech?techName(tech):'Toute équipe',statut:status||'Tous',recherche:search||'',nombre_rendez_vous:visibleTickets.length}])
+  addSheet(wb,'Filtres',[{vue:calendarView,periode:title,technicien:tech?techName(tech):'Toute équipe',statut:status||'Tous',recherche:search||'',plage_horaire:fullDay?'00h-24h':'07h-19h',nombre_rendez_vous:visibleTickets.length}])
   downloadWorkbook(wb,'PlanningSecuritas_Planning_'+new Date().toISOString().slice(0,10)+'.xlsx')
   notify('Export Planning téléchargé.')
  }
@@ -109,18 +122,23 @@ export function PlanningPage(){
    <div className="planning-nav-row">
     <div className="planning-nav-buttons"><button className="ghost square-action" onClick={()=>api()?.prev()}><ChevronLeft size={17}/></button><button className="secondary" onClick={()=>api()?.today()}>Aujourd’hui</button><button className="ghost square-action" onClick={()=>api()?.next()}><ChevronRight size={17}/></button></div>
     <b className="planning-current-title">{title}</b>
-    <div className="module-tabs planning-view-tabs">
-     <button className={calendarView==='timeGridDay'?'primary':'ghost'} onClick={()=>changeView('timeGridDay')}>Jour</button>
-     <button className={calendarView==='timeGridThreeDay'?'primary':'ghost'} onClick={()=>changeView('timeGridThreeDay')}>3 jours</button>
-     <button className={calendarView==='timeGridWeek'?'primary':'ghost'} onClick={()=>changeView('timeGridWeek')}>Semaine</button>
-     <button className={calendarView==='dayGridMonth'?'primary':'ghost'} onClick={()=>changeView('dayGridMonth')}>Mois</button>
+    <div className="planning-actions-right">
+     <div className="module-tabs planning-view-tabs">
+      <button className={calendarView==='timeGridDay'?'primary':'ghost'} onClick={()=>changeView('timeGridDay')}>Jour</button>
+      <button className={calendarView==='timeGridThreeDay'?'primary':'ghost'} onClick={()=>changeView('timeGridThreeDay')}>3 jours</button>
+      <button className={calendarView==='timeGridWeek'?'primary':'ghost'} onClick={()=>changeView('timeGridWeek')}>Semaine</button>
+      <button className={calendarView==='dayGridMonth'?'primary':'ghost'} onClick={()=>changeView('dayGridMonth')}>Mois</button>
+     </div>
+     <button className={'planning-hours-toggle '+(fullDay?'active':'')} onClick={()=>setFullDay(v=>!v)} title={fullDay?'Revenir à 07h–19h':'Afficher 00h–24h'}>
+      <Clock3 size={15}/><span>{fullDay?'24 h':'07h–19h'}</span>
+     </button>
     </div>
    </div>
    <div className="planning-filter-row">
     <label className="wide-filter">Recherche<div className="input-with-icon"><Search size={15}/><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ticket, site, demandeur, description…"/></div></label>
     {profile?.role==='manager'&&<label>Technicien<select value={tech} onChange={e=>setTech(e.target.value)}><option value="">Toute l’équipe</option>{profiles.map(p=><option key={p.id} value={p.id}>{p.display_name}</option>)}</select></label>}
     <label>Statut<select value={status} onChange={e=>setStatus(e.target.value)}><option value="">Tous</option>{statuses.map(x=><option key={x}>{x}</option>)}</select></label>
-    <span className="planning-result-count">{visibleTickets.length} rendez-vous</span>
+    <span className="planning-result-count">{visibleTickets.length} rendez-vous{!fullDay&&outsideWorkingHours>0?' • '+outsideWorkingHours+' hors plage':''}</span>
    </div>
   </section>
 
@@ -133,8 +151,8 @@ export function PlanningPage(){
      initialView={calendarView}
      firstDay={1}
      allDaySlot={false}
-     slotMinTime="07:00:00"
-     slotMaxTime="20:00:00"
+     slotMinTime={fullDay?"00:00:00":"07:00:00"}
+     slotMaxTime={fullDay?"24:00:00":"19:00:00"}
      nowIndicator
      height="auto"
      headerToolbar={false}
