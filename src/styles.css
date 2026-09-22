@@ -567,3 +567,35 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .ticket-comment-composer textarea{min-height:180px;font-size:12px;padding:10px}
  .ticket-comment-submit{width:100%;justify-content:center}
 }
+
+/* Ticket communication picker + closure composer */
+.ticket-comment-actions{display:flex;justify-content:flex-end;gap:7px;flex-wrap:wrap}
+.ticket-comment-actions button{display:flex;align-items:center;gap:6px}
+.communication-picker-backdrop{align-items:center;justify-content:center;padding:16px;z-index:9500}
+.communication-picker{width:min(760px,96vw);max-height:90vh;background:#fff;border-radius:16px;box-shadow:0 22px 70px rgba(4,18,38,.3);overflow:hidden;display:flex;flex-direction:column}
+.communication-picker-body{padding:10px;overflow:auto;display:grid;gap:10px}
+.communication-picker-filters{display:grid;grid-template-columns:minmax(0,1fr) 180px;gap:8px;align-items:end}
+.communication-picker-list{display:grid;gap:7px}
+.communication-picker-card{border:1px solid #e0e9f1;background:#fbfdff;border-radius:11px;padding:9px;display:grid;gap:8px}
+.communication-picker-card>div:first-child{display:grid;gap:3px}
+.communication-picker-card b{font-size:11px;color:#244968}
+.communication-picker-card small{font-size:8px;color:#6c8195}
+.communication-picker-card p{font-size:9px;line-height:1.4;color:#536b80;margin:3px 0 0;white-space:pre-wrap}
+.communication-picker-actions{display:flex;gap:6px;flex-wrap:wrap}
+.communication-picker-actions button{display:flex;align-items:center;gap:5px}
+.closure-dialog{width:min(640px,96vw)}
+.closure-textarea{width:100%;min-height:210px;resize:vertical;border:1px solid #cfddea;border-radius:10px;padding:11px;font:inherit;font-size:11px;line-height:1.5;background:#fff;color:var(--ink)}
+.closure-textarea:focus{outline:2px solid #9ccff1;outline-offset:1px;border-color:#6fb6e6}
+.closure-dialog-actions{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:7px}
+.closure-dialog-actions button{display:flex;align-items:center;justify-content:center;gap:6px}
+@media(max-width:640px){
+ .ticket-comment-actions{display:grid;grid-template-columns:1fr 1fr}
+ .ticket-comment-actions button{width:100%;justify-content:center}
+ .communication-picker-backdrop{padding:8px;align-items:flex-end}
+ .communication-picker{width:100%;max-height:88vh;border-radius:18px 18px 0 0}
+ .communication-picker-filters{grid-template-columns:1fr}
+ .communication-picker-actions{display:grid;grid-template-columns:1fr 1fr 1fr}
+ .communication-picker-actions button{justify-content:center;font-size:9px}
+ .closure-textarea{min-height:250px;font-size:12px}
+ .closure-dialog-actions{grid-template-columns:1fr}
+}
