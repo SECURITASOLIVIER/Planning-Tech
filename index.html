@@ -28,9 +28,9 @@
           <button class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
         </form>
 
-        <details style="margin-top:14px">
-          <summary style="cursor:pointer;font-weight:800;color:#1769ab">Première installation : créer le premier Manager</summary>
-          <div class="notice" style="margin-top:10px">À utiliser une seule fois. Après création, connecte-toi avec Accès Manager.</div>
+        <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dce6f1">
+          <b style="display:block;margin-bottom:8px;color:#1769ab">Première installation — créer le premier Manager</b>
+          <div class="notice">Le formulaire est affiché directement : aucun bouton à ouvrir.</div>
           <form id="setupForm">
             <div class="field"><label>Code initial</label><input id="setupCode" class="input" required></div>
             <div class="field"><label>Nom affiché</label><input id="setupName" class="input" required></div>
@@ -38,7 +38,8 @@
             <div class="field"><label>Mot de passe</label><input id="setupPassword" class="input" type="password" minlength="10" required></div>
             <button id="setupSubmit" class="btn success" type="submit" style="width:100%">Créer mon premier compte Manager</button>
           </form>
-        </details>
+          <a href="./setup.html" class="btn ghost" style="display:block;text-align:center;text-decoration:none;margin-top:8px">Ouvrir la page d’installation séparée</a>
+        </div>
       </div>
 
       <div class="accessCard" style="border:1px solid #dce6f1;border-radius:16px;padding:16px;background:#fbfdff">
@@ -238,6 +239,7 @@
 <div id="toast" class="toast"></div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./app.js"></script>
 </body>
 </html>
