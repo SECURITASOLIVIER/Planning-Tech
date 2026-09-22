@@ -40,18 +40,34 @@ form.addEventListener('submit',async e=>{
  e.preventDefault();
  btn.disabled=true;btn.textContent='Création en cours...';
  try{
-  const body={
-   email:document.getElementById('email').value.trim(),
-   password:document.getElementById('password').value,
-   display_name:document.getElementById('name').value.trim()
-  };
-  const {data,error}=await supabase.functions.invoke('bootstrap-manager',{body});
+  const email=document.getElementById('email').value.trim().toLowerCase();
+  const password=document.getElementById('password').value;
+  const displayName=document.getElementById('name').value.trim();
+
+  const {data,error}=await supabase.auth.signUp({
+    email,
+    password,
+    options:{data:{display_name:displayName}}
+  });
+
   if(error){show('Erreur : '+error.message);return}
-  if(data?.error){show(data.error);return}
-  show('Compte Manager créé. Retourne maintenant à la page de connexion et utilise Accès Manager.',true);
-  form.reset();
- }catch(err){show('Erreur : '+(err?.message||err))}
- finally{btn.disabled=false;btn.textContent='Créer le compte Manager'}
+
+  if(!data.user){
+    show('Création impossible : aucun utilisateur retourné par Supabase.');
+    return
+  }
+
+  if(data.session){
+    show('Compte Manager créé et connecté. Redirection...',true);
+    setTimeout(()=>location.href='./index.html',900);
+  }else{
+    show('Compte Manager créé. Supabase demande une confirmation par email : ouvre le message reçu sur '+email+', puis reviens te connecter avec Accès Manager.',true);
+  }
+ }catch(err){
+  show('Erreur : '+(err?.message||err))
+ }finally{
+  btn.disabled=false;btn.textContent='Créer le compte Manager'
+ }
 });
 </script>
 </body>
