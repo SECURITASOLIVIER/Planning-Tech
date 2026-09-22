@@ -352,7 +352,7 @@ async function exportExcel(){
   const ticketRows=S.tickets.map(t=>({Numero:t.ticket_number,Titre:t.subject,Utilisateur:t.requester,Technicien:profileName(t.assigned_to),Statut:t.status,Priorite:t.priority,Categorie:t.category,Type:t.intervention_type,Bloquant:t.is_blocking?'Oui':'Non',Incident_parent:t.parent_incident,Arrivee:fmt(t.arrival_at),Debut:fmt(t.planned_start),Fin:fmt(t.planned_end),Resolution:t.resolution_comment,Cloture:fmt(t.closed_at)}))
   const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ticketRows),'Tickets')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet((comments.data||[]).map(c=>({Ticket:c.ticket_id,Auteur:c.author_name,Commentaire:c.body,Date:fmt(c.created_at)}))),'Commentaires')
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.profiles.map(p=>({Nom:p.display_name,Email:p.email,Role:p.role,Actif:p.active?'Oui':'Non',Debut:p.work_start,Fin:p.work_end})),'Techniciens')
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.profiles.map(p=>({Nom:p.display_name,Email:p.email,Role:p.role,Actif:p.active?'Oui':'Non',Debut:p.work_start,Fin:p.work_end}))),'Techniciens')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(materials.data||[]),'Materiel')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(history.data||[]),'Historique')
   XLSX.writeFile(wb,'SuperSupportIT_Base_'+ymd(new Date())+'.xlsx');toast('Export Excel généré')
