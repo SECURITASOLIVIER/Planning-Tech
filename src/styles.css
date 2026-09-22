@@ -154,3 +154,22 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .module-mobile-list{display:grid;gap:7px}.desktop-only{display:none!important}
  .module-tabs{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}.module-tabs::-webkit-scrollbar{display:none}.module-tabs button{flex:0 0 auto;white-space:nowrap}
 }
+
+/* Final cross-module alignment */
+.chart-box{height:300px;min-width:0}
+.kpi-page .module-filter-grid{grid-template-columns:repeat(2,minmax(160px,220px))}
+.dashboard-actions{justify-content:flex-end}
+.page-head .module-tabs{margin-left:auto}
+.users-page .module-filter-grid,.clients-page .module-filter-grid{grid-template-columns:minmax(220px,2fr) repeat(2,minmax(140px,1fr))}
+.users-page .module-mobile-card label{margin-top:2px}
+.clients-page .detail-panel h3,.tickets-page .detail-panel h3{font-size:13px;margin:12px 0 7px}
+.module-mobile-card .detail-description{margin:0;overflow-wrap:anywhere}
+@media(max-width:640px){
+ .chart-box{height:230px}
+ .kpi-page .module-filter-grid,.users-page .module-filter-grid,.clients-page .module-filter-grid{grid-template-columns:1fr 1fr}
+ .kpi-page .module-tabs,.page-head .module-tabs{width:100%;margin-left:0}
+ .dashboard-actions{justify-content:stretch}.dashboard-actions .page-primary-action{width:100%}
+ .users-page .card,.clients-page .card,.tickets-page .card,.audit-page .card,.kpi-page .card,.config-page .card,.inventory-page .card{border-radius:12px}
+ .module-mobile-actions button{font-size:9px;padding:7px 6px}
+ .module-mobile-meta{grid-template-columns:1fr 1fr}
+}
