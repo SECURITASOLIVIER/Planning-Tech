@@ -10,35 +10,56 @@
 <body>
 
 <section id="authScreen" class="authWrap">
-  <div class="authCard">
+  <div class="authCard" style="width:min(980px,100%)">
     <div class="brandLine">
       <div class="dots"><i></i><i></i><i></i></div>
-      <div><h1>Super Support IT</h1><p>Planning ITSM sécurisé • Manager / Technicien</p></div>
+      <div><h1>Super Support IT</h1><p>Choisis ton type d’accès.</p></div>
     </div>
 
-    <div class="authTabs">
-      <button id="showLogin" class="btn primary" type="button">Connexion</button>
-      <button id="showSetup" class="btn ghost" type="button">Premier manager</button>
+    <div class="accessGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="accessCard" style="border:1px solid #dce6f1;border-radius:16px;padding:16px;background:#f8fbff">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0b3b76;color:white;font-size:20px">M</div>
+          <div><b style="font-size:18px">Accès Manager</b><div class="muted" style="font-size:11px">Tous les tickets, utilisateurs, KPI, configuration et export Excel</div></div>
+        </div>
+        <form id="managerLoginForm">
+          <div class="field"><label>Email Manager</label><input id="managerEmail" class="input" type="email" required autocomplete="username"></div>
+          <div class="field"><label>Mot de passe</label><input id="managerPassword" class="input" type="password" required autocomplete="current-password"></div>
+          <button class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
+        </form>
+
+        <details style="margin-top:14px">
+          <summary style="cursor:pointer;font-weight:800;color:#1769ab">Première installation : créer le premier Manager</summary>
+          <div class="notice" style="margin-top:10px">À utiliser une seule fois. Après création, connecte-toi avec Accès Manager.</div>
+          <form id="setupForm">
+            <div class="field"><label>Code initial</label><input id="setupCode" class="input" required></div>
+            <div class="field"><label>Nom affiché</label><input id="setupName" class="input" required></div>
+            <div class="field"><label>Email Manager</label><input id="setupEmail" class="input" type="email" required></div>
+            <div class="field"><label>Mot de passe</label><input id="setupPassword" class="input" type="password" minlength="10" required></div>
+            <button id="setupSubmit" class="btn success" type="submit" style="width:100%">Créer mon premier compte Manager</button>
+          </form>
+        </details>
+      </div>
+
+      <div class="accessCard" style="border:1px solid #dce6f1;border-radius:16px;padding:16px;background:#fbfdff">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#1677d2;color:white;font-size:20px">T</div>
+          <div><b style="font-size:18px">Accès Technicien</b><div class="muted" style="font-size:11px">Uniquement le planning et les tickets qui te sont assignés</div></div>
+        </div>
+        <form id="techLoginForm">
+          <div class="field"><label>Email Technicien</label><input id="techEmail" class="input" type="email" required autocomplete="username"></div>
+          <div class="field"><label>Mot de passe</label><input id="techPassword" class="input" type="password" required autocomplete="current-password"></div>
+          <button class="btn primary" type="submit" style="width:100%">Entrer en Technicien</button>
+        </form>
+        <div class="notice" style="margin-top:14px">
+          Les comptes Techniciens sont créés par un Manager depuis la rubrique <b>Utilisateurs</b>.
+        </div>
+      </div>
     </div>
 
-    <div id="loginPane">
-      <form id="loginForm">
-        <div class="field"><label>Email</label><input id="loginEmail" class="input" type="email" required autocomplete="username"></div>
-        <div class="field"><label>Mot de passe</label><input id="loginPassword" class="input" type="password" required autocomplete="current-password"></div>
-        <button class="btn primary" type="submit" style="width:100%">Se connecter</button>
-      </form>
-    </div>
-
-    <div id="setupPane" class="hidden">
-      <div class="notice">À utiliser une seule fois pour créer le premier compte Manager.</div>
-      <form id="setupForm">
-        <div class="field"><label>Code initial</label><input id="setupCode" class="input" required></div>
-        <div class="field"><label>Nom affiché</label><input id="setupName" class="input" required></div>
-        <div class="field"><label>Email manager</label><input id="setupEmail" class="input" type="email" required></div>
-        <div class="field"><label>Mot de passe</label><input id="setupPassword" class="input" type="password" minlength="10" required></div>
-        <button class="btn success" type="submit" style="width:100%">Créer le Manager</button>
-      </form>
-    </div>
+    <style>
+      @media(max-width:760px){.accessGrid{grid-template-columns:1fr!important}}
+    </style>
   </div>
 </section>
 
@@ -217,6 +238,6 @@
 <div id="toast" class="toast"></div>
 </div>
 
-<script type="module" src="./app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>\n<script src="./app.js"></script>
 </body>
 </html>
