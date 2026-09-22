@@ -12,7 +12,7 @@ import { TicketNotificationDialog,type PendingTicketNotification } from '../comp
 import { TicketCommunicationPicker } from '../components/TicketCommunicationPicker'
 import { TicketClosureDialog } from '../components/TicketClosureDialog'
 import { applyTicketContext,mailtoForTemplate } from '../lib/ticketCommunication'
-import type { CommunicationTemplate,Customer,CustomerContact,Profile,Ticket } from '../lib/types'
+import type { CommunicationTemplate,Customer,CustomerContact,InventoryItem,Profile,Ticket } from '../lib/types'
 
 type DateField='created_at'|'arrival_at'|'planned_start'|'closed_at'
 const emptyTicket=():Partial<Ticket>=>({subject:'',requester:'',description:'',category:'',intervention_type:'',status:'',priority:'',assigned_to:null,arrival_at:new Date().toISOString(),planned_start:null,planned_end:null,is_blocking:false,parent_incident:null,general_incident_label:null,customer_id:null,customer_contact_id:null})
@@ -43,6 +43,14 @@ export function TicketsPage(){
  const [closureOpen,setClosureOpen]=useState(false)
  const [closureText,setClosureText]=useState('')
  const [closureBusy,setClosureBusy]=useState(false)
+ const [materialLabel,setMaterialLabel]=useState('')
+ const [materialQty,setMaterialQty]=useState(1)
+ const [materialNote,setMaterialNote]=useState('')
+ const [editingMaterialId,setEditingMaterialId]=useState<string|null>(null)
+ const [stockItemId,setStockItemId]=useState('')
+ const [stockQty,setStockQty]=useState(1)
+ const [stockReason,setStockReason]=useState('')
+ const [materialBusy,setMaterialBusy]=useState(false)
 
  const {data:tickets=[]}=useQuery({queryKey:['tickets'],queryFn:async()=>{const {data,error}=await supabase.from('tickets').select('*').order('arrival_at',{ascending:false});if(error)throw error;return data as Ticket[]}})
  const {data:profiles=[]}=useQuery({queryKey:['profiles','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('profiles').select('*').order('display_name');if(error)throw error;return data as Profile[]}})
@@ -51,6 +59,8 @@ export function TicketsPage(){
  const {data:customerContacts=[]}=useQuery({queryKey:['customer-contacts','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('customer_contacts').select('*').eq('active',true).order('last_name');if(error)throw error;return data as CustomerContact[]}})
  const {data:distribution=[]}=useQuery({queryKey:['notification-distribution'],queryFn:async()=>{const {data,error}=await supabase.from('notification_distribution_recipients').select('*').eq('active',true).order('sort_order');if(error)throw error;return data||[]}})
  const {data:communicationTemplates=[]}=useQuery({queryKey:['communication_templates','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('communication_templates').select('*').eq('channel','Outlook').eq('active',true).order('theme').order('sort_order').order('title');if(error)throw error;return data as CommunicationTemplate[]}})
+ const {data:materialsCatalog=[]}=useQuery({queryKey:['materials-catalog','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('materials_catalog').select('*').eq('active',true).order('label');if(error)throw error;return data||[]}})
+ const {data:inventoryItems=[]}=useQuery({queryKey:['inventory','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('inventory_items').select('*').eq('active',true).order('category').order('model');if(error)throw error;return data as InventoryItem[]}})
 
  const {data:comments=[]}=useQuery({queryKey:['comments',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_comments').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
  const {data:history=[]}=useQuery({queryKey:['ticket-history-detail',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_history').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
@@ -96,8 +106,8 @@ export function TicketsPage(){
  useEffect(()=>{if(selected&&!selected.id){setSelected(s=>({...s,status:s?.status||defaultLabel('status','new'),priority:s?.priority||defaultLabel('priority','normal'),category:s?.category||cfg('category')[0]?.label||'',intervention_type:s?.intervention_type||cfg('type')[0]?.label||''}))}},[config])
  useEffect(()=>{if(selected?.id)setRecipientEmails(ticketRecipients.map((x:any)=>String(x.email).toLowerCase()))},[selected?.id,ticketRecipients])
 
- const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null)}
- const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null)}
+ const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null);setEditingMaterialId(null);setMaterialLabel('');setMaterialQty(1);setMaterialNote('');setStockItemId('');setStockQty(1);setStockReason('')}
+ const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null);setEditingMaterialId(null);setMaterialLabel('');setMaterialQty(1);setMaterialNote('');setStockItemId('');setStockQty(1);setStockReason('')}
  const clearFilters=()=>{setSearch('');setFrom('');setTo('');setTechnician('');setRequester('');setCustomer('');setStatusFilter('');setPriorityFilter('');setDateField('created_at')}
 
  const addRecipient=(emailRaw?:string)=>{
@@ -245,6 +255,71 @@ export function TicketsPage(){
   window.location.href=mailtoForTemplate(ticketRecipientList(),prepared.subject,prepared.body)
  }
 
+ const startEditMaterial=(m:any)=>{setEditingMaterialId(m.id);setMaterialLabel(m.label||'');setMaterialQty(Number(m.quantity||1));setMaterialNote(m.note||'')}
+ const resetMaterialEditor=()=>{setEditingMaterialId(null);setMaterialLabel('');setMaterialQty(1);setMaterialNote('')}
+
+ const saveMaterial=async()=>{
+  if(!selected?.id)return
+  const label=materialLabel.trim()
+  if(!label){notify('Le libellé du matériel est obligatoire.','error');return}
+  if(materialQty<1){notify('La quantité doit être au moins de 1.','error');return}
+  try{
+   setMaterialBusy(true)
+   if(editingMaterialId){
+    const {error}=await supabase.from('ticket_materials').update({label,quantity:materialQty,note:materialNote.trim()||null}).eq('id',editingMaterialId)
+    if(error){notify(error.message,'error');return}
+    notify('Matériel corrigé dans le ticket.')
+   }else{
+    const catalog=materialsCatalog.find((x:any)=>x.label===label)
+    const {error}=await supabase.from('ticket_materials').insert({ticket_id:selected.id,catalog_id:catalog?.id||null,label,quantity:materialQty,note:materialNote.trim()||null})
+    if(error){notify(error.message,'error');return}
+    notify('Matériel ajouté au ticket.')
+   }
+   resetMaterialEditor()
+   await Promise.all([
+    qc.invalidateQueries({queryKey:['ticket-materials-detail',selected.id]}),
+    qc.invalidateQueries({queryKey:['ticket-history-detail',selected.id]})
+   ])
+  }finally{setMaterialBusy(false)}
+ }
+
+ const removeMaterial=async(m:any)=>{
+  if(!selected?.id)return
+  if(!confirm('Retirer "'+m.label+'" du ticket ?'))return
+  const {error}=await supabase.from('ticket_materials').delete().eq('id',m.id)
+  if(error){notify(error.message,'error');return}
+  if(editingMaterialId===m.id)resetMaterialEditor()
+  notify('Matériel retiré du ticket.')
+  await Promise.all([
+   qc.invalidateQueries({queryKey:['ticket-materials-detail',selected.id]}),
+   qc.invalidateQueries({queryKey:['ticket-history-detail',selected.id]})
+  ])
+ }
+
+ const useStockMaterial=async()=>{
+  if(!selected?.id)return
+  if(!stockItemId){notify('Choisis une référence de l’inventaire.','error');return}
+  if(stockQty<1){notify('La quantité doit être au moins de 1.','error');return}
+  if(!stockReason.trim()){notify('Le motif d’utilisation est obligatoire.','error');return}
+  const item=inventoryItems.find(i=>i.id===stockItemId)
+  if(!item)return
+  try{
+   setMaterialBusy(true)
+   const {error}=await supabase.rpc('inventory_record_movement',{
+    p_item_id:stockItemId,p_type:'INTERVENTION_USE',p_quantity:stockQty,p_reason:stockReason.trim(),p_ticket_id:selected.id,p_assignee:selected.requester||null
+   })
+   if(error){notify(error.message,'error');return}
+   notify('Matériel sorti du stock et lié à l’intervention.')
+   setStockItemId('');setStockQty(1);setStockReason('')
+   await Promise.all([
+    qc.invalidateQueries({queryKey:['ticket-stock-detail',selected.id]}),
+    qc.invalidateQueries({queryKey:['ticket-history-detail',selected.id]}),
+    qc.invalidateQueries({queryKey:['inventory']}),
+    qc.invalidateQueries({queryKey:['inventory','tickets']})
+   ])
+  }finally{setMaterialBusy(false)}
+ }
+
  const reopen=async()=>{
   if(!selected?.id)return
   const {error}=await supabase.rpc('reopen_ticket',{p_ticket_id:selected.id})
@@ -385,7 +460,32 @@ export function TicketsPage(){
     <div className="planning-history-list">{history.length===0&&<span className="muted">Aucun historique.</span>}{history.map((h:any)=><details className="compact-history" key={h.id}><summary><b>{h.action}</b><small>{excelDate(h.created_at)} • {techName(h.actor_id)}</small></summary><pre>{JSON.stringify(h.details||{},null,2)}</pre></details>)}</div>
 
     <h3 className="section-title"><Package size={15}/> Matériel & stock</h3>
-    <div className="planning-history-list">{materials.map((m:any)=><div className="planning-stock-row" key={'mat-'+m.id}><b>{m.label} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.note||'Sans note'}</small></div>)}{movements.map((m:any)=><details className="compact-history" key={'mov-'+m.id}><summary><b>{m.movement_type} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.reason||'Sans motif'}</small></summary><div className="detail-key-values"><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Acteur</span><b>{techName(m.actor_id)}</b></div><div><span>Note</span><b>{m.note||'—'}</b></div></div></details>)}{materials.length===0&&movements.length===0&&<span className="muted">Aucun matériel lié.</span>}</div>
+
+    <section className="ticket-material-editor">
+     <div className="ticket-material-editor-head"><div><Package size={16}/><b>{editingMaterialId?'Corriger un matériel':'Ajouter du matériel'}</b></div>{editingMaterialId&&<button className="ghost small" onClick={resetMaterialEditor}>Annuler correction</button>}</div>
+     <div className="ticket-material-form">
+      <label className="wide-filter">Matériel<input list="ticket-material-catalog" value={materialLabel} onChange={e=>setMaterialLabel(e.target.value)} placeholder="ex: Caméra, alimentation, switch, câble…"/><datalist id="ticket-material-catalog">{materialsCatalog.map((m:any)=><option key={m.id} value={m.label}/>)}</datalist></label>
+      <label>Quantité<input type="number" min="1" value={materialQty} onChange={e=>setMaterialQty(Math.max(1,Number(e.target.value)||1))}/></label>
+      <label className="wide-filter">Note<input value={materialNote} onChange={e=>setMaterialNote(e.target.value)} placeholder="Modèle, emplacement, n° série, précision…"/></label>
+      <button className="secondary" onClick={()=>void saveMaterial()} disabled={materialBusy}><Save size={14}/>{editingMaterialId?' Corriger':' Ajouter'}</button>
+     </div>
+    </section>
+
+    <section className="ticket-stock-use">
+     <div className="ticket-material-editor-head"><div><Package size={16}/><b>Utiliser du stock pour l’intervention</b></div></div>
+     <div className="ticket-material-form">
+      <label className="wide-filter">Référence inventaire<select value={stockItemId} onChange={e=>setStockItemId(e.target.value)}><option value="">— Choisir —</option>{inventoryItems.map(i=><option key={i.id} value={i.id}>{[i.category,i.manufacturer,i.model,i.reference].filter(Boolean).join(' • ')} — dispo {i.quantity_total-i.quantity_reserved-i.quantity_assigned}</option>)}</select></label>
+      <label>Quantité<input type="number" min="1" value={stockQty} onChange={e=>setStockQty(Math.max(1,Number(e.target.value)||1))}/></label>
+      <label className="wide-filter">Motif obligatoire<input value={stockReason} onChange={e=>setStockReason(e.target.value)} placeholder="Remplacement caméra HS, installation switch, alimentation remplacée…"/></label>
+      <button className="primary" onClick={()=>void useStockMaterial()} disabled={materialBusy||!stockItemId}><Package size={14}/> Sortir & lier</button>
+     </div>
+    </section>
+
+    <div className="planning-history-list">
+     {materials.map((m:any)=><div className="planning-stock-row ticket-material-row" key={'mat-'+m.id}><div><b>{m.label} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.note||'Sans note'}</small></div><div className="actions"><button className="ghost small" onClick={()=>startEditMaterial(m)}>Corriger</button><button className="danger small" onClick={()=>void removeMaterial(m)}><Trash2 size={13}/></button></div></div>)}
+     {movements.map((m:any)=><details className="compact-history" key={'mov-'+m.id}><summary><b>{m.movement_type} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.reason||'Sans motif'}</small></summary><div className="detail-key-values"><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Acteur</span><b>{techName(m.actor_id)}</b></div><div><span>Note</span><b>{m.note||'—'}</b></div></div></details>)}
+     {materials.length===0&&movements.length===0&&<span className="muted">Aucun matériel lié.</span>}
+    </div>
    </>}
   </DetailDrawer>}
 
