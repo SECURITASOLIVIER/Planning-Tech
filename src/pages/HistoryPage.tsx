@@ -91,7 +91,7 @@ export function HistoryPage(){
  return <div className="page history-page">
   <header className="page-head">
    <div><h1>Historique</h1><p>Historique des tickets et mouvements de stock sur la période.</p></div>
-   {manager&&<button className="secondary page-primary-action" onClick={exportExcel}><Download size={16}/> Export Excel</button>}
+   <button className="secondary page-primary-action" onClick={exportExcel}><Download size={16}/> Export Excel</button>
   </header>
 
   <section className="card module-filter-card">
