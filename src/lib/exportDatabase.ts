@@ -3,8 +3,8 @@ import { supabase } from './supabase'
 const BUSINESS_TABLES=[
  'profiles','config_values','materials_catalog','customers','customer_contacts',
  'tickets','ticket_comments','ticket_materials','ticket_history',
- 'inventory_items','inventory_movements','inventory_allocations',
- 'communication_templates','audit_events'
+ 'inventory_items','inventory_movements','inventory_allocations','inventory_assets',
+ 'communication_templates','technician_presence','ticket_worklogs','audit_events'
 ] as const
 
 function downloadJson(data:unknown,filename:string){
