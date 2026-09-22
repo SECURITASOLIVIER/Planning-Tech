@@ -370,7 +370,7 @@ async function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(S.profiles.map(p=>({Nom:p.display_name,Email:p.email,Role:p.role,Actif:p.active?'Oui':'Non',Debut:p.work_start,Fin:p.work_end}))),'Techniciens')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(materials.data||[]),'Materiel')
   XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(history.data||[]),'Historique')
-  XLSX.writeFile(wb,'SuperSupportIT_Base_'+ymd(new Date())+'.xlsx');toast('Export Excel généré')
+  XLSX.writeFile(wb,'PlanningSecuritas_Base_'+ymd(new Date())+'.xlsx');toast('Export Excel généré')
  }catch(e){toast('Export Excel impossible : '+e.message)}
 }
 
