@@ -5,9 +5,6 @@ import { QueryClient,QueryClientProvider } from '@tanstack/react-query'
 import { AuthProvider } from './auth/AuthProvider'
 import App from './App'
 import './styles.css'
-import '@fullcalendar/core/index.css'
-import '@fullcalendar/daygrid/index.css'
-import '@fullcalendar/timegrid/index.css'
 
 const queryClient=new QueryClient({defaultOptions:{queries:{staleTime:15000,retry:1}}})
 ReactDOM.createRoot(document.getElementById('root')!).render(
