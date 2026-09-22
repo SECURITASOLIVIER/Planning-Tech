@@ -7,6 +7,8 @@ import type { InventoryItem,InventoryMovement,Profile,Ticket } from '../lib/type
 import { inventoryAvailable } from '../lib/types'
 import * as XLSX from 'xlsx'
 import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
+import { notify } from '../lib/notify'
+import { DetailDrawer } from '../components/DetailDrawer'
 
 type StockFilter='all'|'ok'|'low'|'out'
 type ActiveFilter='all'|'active'|'inactive'
@@ -141,9 +143,8 @@ export function InventoryPage(){
   }
   const q=selected?supabase.from('inventory_items').update(row).eq('id',selected.id):supabase.from('inventory_items').insert(row)
   const {error}=await q
-  if(error){alert(error.message);return}
-  setSelected(null);setPanelMode('none')
-  await qc.invalidateQueries({queryKey:['inventory']})
+  if(error){notify(error.message,'error');return}
+  setSelected(null);setPanelMode('none');notify(selected?'Référence modifiée.':'Référence créée.');await qc.invalidateQueries({queryKey:['inventory']})
  }
 
  const recordMovement=async(e:FormEvent<HTMLFormElement>)=>{
@@ -161,9 +162,8 @@ export function InventoryPage(){
   const {error}=await supabase.rpc('inventory_record_movement',{
    p_item_id:selected.id,p_type:type,p_quantity:quantity,p_reason:reason,p_ticket_id:ticketId,p_assignee:assignee
   })
-  if(error){alert(error.message);return}
-  setMovementOpen(false)
-  await Promise.all([
+  if(error){notify(error.message,'error');return}
+  setMovementOpen(false);notify('Mouvement de stock enregistré.');await Promise.all([
    qc.invalidateQueries({queryKey:['inventory']}),
    qc.invalidateQueries({queryKey:['inventory_movements']})
   ])
@@ -175,8 +175,8 @@ export function InventoryPage(){
   const qty=Number(prompt('Quantité')||0)
   if(qty<=0)return
   const {error}=await supabase.rpc('reserve_inventory',{p_ticket_id:ticket,p_item_id:i.id,p_quantity:qty})
-  if(error){alert(error.message);return}
-  await Promise.all([qc.invalidateQueries({queryKey:['inventory']}),qc.invalidateQueries({queryKey:['inventory_movements']})])
+  if(error){notify(error.message,'error');return}
+  notify('Réservation enregistrée.');await Promise.all([qc.invalidateQueries({queryKey:['inventory']}),qc.invalidateQueries({queryKey:['inventory_movements']})])
  }
 
  const hasFilters=!!(search||category||manufacturer||stock!=='all'||active!=='all')
@@ -202,7 +202,7 @@ export function InventoryPage(){
    }}) )
    addSheet(wb,'Filtres',[{recherche:movementSearch,resultats:movementRows.length}])
   }
-  downloadWorkbook(wb,'PlanningSecuritas_'+(view==='catalog'?'Inventaire':'Mouvements')+'_'+new Date().toISOString().slice(0,10)+'.xlsx')
+  downloadWorkbook(wb,'PlanningSecuritas_'+(view==='catalog'?'Inventaire':'Mouvements')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');notify('Export '+(view==='catalog'?'Inventaire':'Mouvements')+' téléchargé.')
  }
  const movementTypeOptions=manager
   ?['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN','ADJUSTMENT_IN','ADJUSTMENT_OUT','LOST','BROKEN','RETIRED']
@@ -328,7 +328,7 @@ export function InventoryPage(){
    <div className="table-wrap desktop-only"><table><thead><tr><th>Date</th><th>Matériel</th><th>Mouvement</th><th>Qté</th><th>Ticket</th><th>Motif</th><th>Bénéficiaire</th><th>Acteur</th></tr></thead><tbody>{movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id);const actor=profiles.find(p=>p.id===m.actor_id);return <tr key={m.id} className="clickable-row" onClick={()=>setSelectedMovement(m)}><td>{new Date(m.created_at).toLocaleString('fr-FR')}</td><td><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||m.item_id}</b><br/><small>{i?.reference||''}</small></td><td><span className="badge">{movementLabels[m.movement_type]||m.movement_type}</span></td><td>{m.quantity}</td><td>{m.ticket_number_snapshot||'—'}</td><td>{m.reason}</td><td>{m.assignee||'—'}</td><td>{actor?.display_name||m.actor_id||'Système'}</td></tr>})}</tbody></table></div>
 
    <div className="module-mobile-list">{movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id);const actor=profiles.find(p=>p.id===m.actor_id);return <article className="module-mobile-card clickable-row" key={m.id} onClick={()=>setSelectedMovement(m)}><div className="module-mobile-head"><div><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||'Matériel'}</b><small>{new Date(m.created_at).toLocaleString('fr-FR')} • {m.ticket_number_snapshot||'Sans ticket'}</small></div><span className="badge">{movementLabels[m.movement_type]||m.movement_type}</span></div><div className="module-mobile-meta"><div><span>Quantité</span><b>{m.quantity}</b></div><div><span>Acteur</span><b>{actor?.display_name||'Utilisateur'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div></div><div className="detail-description"><b>Motif :</b> {m.reason}</div></article>})}</div>
-   {selectedMovement&&<section className="card inline-data-panel"><div className="inline-data-head"><div><small>Détail mouvement</small><h2>{movementLabels[selectedMovement.movement_type]||selectedMovement.movement_type}</h2></div><button className="ghost small" onClick={()=>setSelectedMovement(null)}><X size={15}/></button></div><div className="detail-summary-grid">{Object.entries({
+   {selectedMovement&&<DetailDrawer title={movementLabels[selectedMovement.movement_type]||selectedMovement.movement_type} subtitle="Détail mouvement de stock" onClose={()=>setSelectedMovement(null)}><div className="detail-summary-grid">{Object.entries({
     Date:excelDate(selectedMovement.created_at),
     Matériel:[items.find(i=>i.id===selectedMovement.item_id)?.manufacturer,items.find(i=>i.id===selectedMovement.item_id)?.model].filter(Boolean).join(' ')||selectedMovement.item_id,
     Référence:items.find(i=>i.id===selectedMovement.item_id)?.reference||'—',
@@ -340,7 +340,7 @@ export function InventoryPage(){
     Acteur:profiles.find(p=>p.id===selectedMovement.actor_id)?.display_name||selectedMovement.actor_id||'—',
     Motif:selectedMovement.reason||'—',
     Note:selectedMovement.note||'—'
-   }).map(([k,v])=><div key={k}><span>{k}</span><b>{String(v)}</b></div>)}</div></section>}
+   }).map(([k,v])=><div key={k}><span>{k}</span><b>{String(v)}</b></div>)}</div></DetailDrawer>}
   </>}
  </div>
 }
