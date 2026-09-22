@@ -7,6 +7,8 @@ if(!window.supabase?.createClient){
  throw new Error('Supabase JS non chargé')
 }
 const supabase=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY)
+window.SSI_SUPABASE=supabase
+window.enterSession=enterSession
 
 const S={
  session:null,user:null,profile:null,isManager:false,
