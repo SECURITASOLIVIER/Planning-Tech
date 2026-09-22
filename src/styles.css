@@ -263,3 +263,92 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .inventory-movement-actions{grid-template-columns:1fr 1fr}
  .inventory-movement-actions button:last-child{grid-column:1/-1}
 }
+
+/* Drill-down, exports and streamlined planning */
+.kpi-button{font:inherit;text-align:left;width:100%;cursor:pointer;color:inherit}
+.kpi-button svg{position:absolute;right:10px;top:10px;color:#6f8aa2}
+.kpi-button.selected,.dashboard-detail-card.selected{outline:2px solid #2c9ce9;outline-offset:1px}
+.dashboard-detail-card{border:1px solid var(--line);text-align:left;color:inherit;cursor:pointer;width:100%}
+.dashboard-detail-card>small{display:block;margin-top:8px;color:#1769ab;font-weight:850}
+.inline-data-panel{display:grid;gap:10px;border-left:4px solid #1a84dd}
+.inline-data-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.inline-data-head small{font-size:8px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);font-weight:900}
+.inline-data-head h2{font-size:16px;margin:2px 0 0}
+.clickable-row{cursor:pointer;transition:background .12s ease,border-color .12s ease}
+.clickable-row:hover{background:#f2f8fd!important}
+.tap-detail{color:#1769ab;font-weight:750;font-size:8px}
+.detail-key-values{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.detail-key-values>div{background:#f7fafd;border:1px solid #e6eef5;border-radius:9px;padding:8px;display:grid;gap:3px;min-width:0}
+.detail-key-values span{font-size:7px;text-transform:uppercase;color:var(--muted);font-weight:900}
+.detail-key-values b{font-size:10px;overflow-wrap:anywhere;white-space:pre-wrap}
+.detail-row-button{width:100%;text-align:left;color:inherit;cursor:pointer}
+.detail-row-button span{font-size:9px;color:#526a80}
+.inventory-head-actions{margin-left:auto}
+.inventory-head-actions .page-primary-action{margin:0}
+.planning-controls{display:grid;gap:10px;padding:10px}
+.planning-nav-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px}
+.planning-nav-buttons{display:flex;align-items:center;gap:5px}
+.square-action{width:38px;min-width:38px;height:38px;padding:0;display:grid;place-items:center}
+.planning-current-title{text-align:center;font-size:14px;color:#173b5d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planning-view-tabs{justify-content:flex-end}
+.planning-filter-row{display:grid;grid-template-columns:minmax(230px,2fr) minmax(150px,1fr) minmax(130px,1fr) auto;gap:8px;align-items:end}
+.planning-result-count{align-self:center;justify-self:end;font-size:9px;color:var(--muted);font-weight:850;white-space:nowrap}
+.planning-list-card{margin-top:9px;padding:10px}
+.planning-event-list{display:grid;gap:5px;max-height:260px;overflow:auto}
+.planning-event-row{width:100%;border:1px solid #e4edf5;background:#fbfdff;border-radius:9px;padding:8px 9px;display:flex;align-items:center;justify-content:space-between;gap:10px;text-align:left;color:var(--ink);cursor:pointer}
+.planning-event-row:hover,.planning-event-row.selected{background:#edf7ff;border-color:#9ecdf0}
+.planning-event-row>div{display:grid;gap:2px;min-width:0}
+.planning-event-row>div:last-child{text-align:right;justify-items:end}
+.planning-event-row b{font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.planning-event-row small{font-size:8px;color:var(--muted)}
+.planning-history-row pre{white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 0;font-size:8px;color:#526a80;font-family:inherit}
+.planning-stock-row span{font-size:8px;color:#526a80}
+.fc .fc-scrollgrid{border-radius:9px;overflow:hidden}
+.fc .fc-timegrid-col-frame{min-width:0}
+.fc .fc-event-title{white-space:normal;line-height:1.15}
+.history-filters{grid-template-columns:130px 130px 130px 170px minmax(220px,1fr)}
+@media(max-width:900px){
+ .planning-nav-row{grid-template-columns:1fr}
+ .planning-nav-buttons{justify-content:center}
+ .planning-current-title{order:-1}
+ .planning-view-tabs{justify-content:center}
+ .planning-filter-row{grid-template-columns:1fr 1fr}
+ .planning-filter-row .wide-filter{grid-column:1/-1}
+ .planning-result-count{grid-column:1/-1;justify-self:start}
+ .inventory-head-actions{margin-left:0}
+ .history-filters{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+ .clickable-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .kpi-button{min-height:78px}
+ .inline-data-panel{padding:10px;border-left-width:3px}
+ .detail-key-values{grid-template-columns:1fr}
+ .inventory-head-actions{display:grid;width:100%;grid-template-columns:1fr 1fr}
+ .inventory-head-actions .page-primary-action{width:100%;font-size:10px;padding:8px 5px;white-space:nowrap}
+ .planning-controls{padding:7px;gap:7px;position:sticky;top:104px;z-index:12}
+ .planning-nav-row{gap:6px}
+ .planning-nav-buttons{display:grid;grid-template-columns:38px 1fr 38px;width:100%}
+ .planning-nav-buttons .secondary{min-height:38px}
+ .planning-view-tabs{display:grid!important;grid-template-columns:repeat(3,1fr);width:100%;overflow:visible}
+ .planning-view-tabs button{width:100%;font-size:10px;padding:8px 4px}
+ .planning-current-title{font-size:12px}
+ .planning-filter-row{grid-template-columns:1fr 1fr;gap:5px}
+ .planning-filter-row label{font-size:7px}
+ .planning-filter-row input,.planning-filter-row select{font-size:11px;min-height:34px;padding:6px 8px}
+ .planning-result-count{font-size:8px}
+ .calendar-shell .fc{padding:3px}
+ .calendar-shell .fc .fc-timegrid-axis{width:32px!important}
+ .calendar-shell .fc .fc-timegrid-slot-label-cushion{font-size:8px!important}
+ .calendar-shell .fc .fc-col-header-cell-cushion{font-size:8px!important;padding:4px 1px!important}
+ .calendar-shell .fc .fc-event{font-size:8px!important;padding:1px 2px!important}
+ .calendar-shell .fc .fc-timegrid-event .fc-event-time{font-size:7px!important}
+ .planning-list-card{padding:8px}
+ .planning-event-list{max-height:220px}
+ .planning-event-row{padding:7px;gap:6px}
+ .planning-event-row b{font-size:9px}
+ .planning-event-row small{font-size:7px}
+ .history-filters{grid-template-columns:1fr 1fr}
+ .history-filters .wide-filter{grid-column:1/-1}
+ .history-presets{display:grid!important;grid-template-columns:repeat(4,1fr);overflow:visible}
+ .history-presets button{font-size:9px;padding:7px 3px}
+}
