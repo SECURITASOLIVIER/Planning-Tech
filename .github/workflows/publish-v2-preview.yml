@@ -1,0 +1,64 @@
+name: Publish React V2 Preview
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/publish-v2-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout V2 source
+        uses: actions/checkout@v4
+        with:
+          ref: refactor/react-v1
+          path: source
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install
+        working-directory: source
+        run: npm install
+
+      - name: Test
+        working-directory: source
+        run: npm test
+
+      - name: Build
+        working-directory: source
+        run: npm run build
+
+      - name: Checkout published main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: publish
+
+      - name: Copy V2 preview
+        run: |
+          rm -rf publish/preview-v2
+          mkdir -p publish/preview-v2
+          cp -R source/dist/. publish/preview-v2/
+          touch publish/preview-v2/.nojekyll
+
+      - name: Commit preview
+        working-directory: publish
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add preview-v2
+          if git diff --cached --quiet; then
+            echo "Preview already up to date"
+            exit 0
+          fi
+          git commit -m "Deploy React V2 preview"
+          git push origin main
