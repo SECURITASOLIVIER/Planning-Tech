@@ -244,7 +244,7 @@ if(!window.supabase){
   document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
-<script src="./app.js?v=20260922-1815"></script>
+<script src="./app.js?v=20260922-1822"></script>
 <script>
 (function(){
   const box=document.getElementById('authMessage');
@@ -282,7 +282,17 @@ if(!window.supabase){
       }
 
       show('Connexion réussie en '+(role==='manager'?'Manager':'Technicien')+'. Chargement…');
-      setTimeout(()=>location.reload(),500);
+      if(typeof window.enterSession!=='function'){
+        show('Connexion réussie, mais la fonction de chargement de l’application est indisponible.');
+        return
+      }
+      try{
+        await window.enterSession(data.session);
+        show('Connexion réussie.');
+      }catch(appErr){
+        console.error('APP LOAD ERROR',appErr);
+        show('Connexion réussie mais chargement de l’application impossible : '+(appErr?.message||appErr));
+      }
     }catch(err){
       show('Erreur technique : '+(err?.message||err));
       console.error(err);
