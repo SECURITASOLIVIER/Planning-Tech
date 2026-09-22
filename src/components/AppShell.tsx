@@ -17,7 +17,7 @@ export function AppShell(){
    item('/clients','Clients',Building2),
    item('/users','Utilisateurs',Users),
    item('/inventory','Inventaire',Boxes),
-   item('/kpi','KPI & activité',Activity),
+   item('/kpi','KPI',Activity),
    item('/configuration','Configuration',Settings),
    ]:[item('/inventory','Matériel',Boxes)])
  ]
