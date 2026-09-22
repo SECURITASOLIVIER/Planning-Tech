@@ -15,13 +15,11 @@ export interface PendingTicketNotification{
 export function TicketNotificationDialog({
  notification,onOpenOutlook,onConfirm
 }:{notification:PendingTicketNotification;onOpenOutlook:()=>Promise<void>;onConfirm:(confirmed:boolean)=>Promise<void>}){
- const [opened,setOpened]=useState(false)
  const [busy,setBusy]=useState(false)
 
  const openOutlook=async()=>{
   const url=outlookComposeUrl(notification.recipients,notification.subject,notification.body)
   window.open(url,'_blank','noopener,noreferrer')
-  setOpened(true)
   try{await onOpenOutlook()}catch{}
  }
 
