@@ -34,6 +34,8 @@ export function TicketsPage(){
  const [recipientInput,setRecipientInput]=useState('')
  const [draftCustomerId,setDraftCustomerId]=useState('')
  const [pendingNotification,setPendingNotification]=useState<PendingTicketNotification|null>(null)
+ const [commentText,setCommentText]=useState('')
+ const [commentBusy,setCommentBusy]=useState(false)
 
  const {data:tickets=[]}=useQuery({queryKey:['tickets'],queryFn:async()=>{const {data,error}=await supabase.from('tickets').select('*').order('arrival_at',{ascending:false});if(error)throw error;return data as Ticket[]}})
  const {data:profiles=[]}=useQuery({queryKey:['profiles','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('profiles').select('*').order('display_name');if(error)throw error;return data as Profile[]}})
@@ -86,8 +88,8 @@ export function TicketsPage(){
  useEffect(()=>{if(selected&&!selected.id){setSelected(s=>({...s,status:s?.status||defaultLabel('status','new'),priority:s?.priority||defaultLabel('priority','normal'),category:s?.category||cfg('category')[0]?.label||'',intervention_type:s?.intervention_type||cfg('type')[0]?.label||''}))}},[config])
  useEffect(()=>{if(selected?.id)setRecipientEmails(ticketRecipients.map((x:any)=>String(x.email).toLowerCase()))},[selected?.id,ticketRecipients])
 
- const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('')}
- const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('')}
+ const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('');setCommentText('')}
+ const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('');setCommentText('')}
  const clearFilters=()=>{setSearch('');setFrom('');setTo('');setTechnician('');setRequester('');setCustomer('');setStatusFilter('');setPriorityFilter('');setDateField('created_at')}
 
  const addRecipient=(emailRaw?:string)=>{
@@ -158,10 +160,16 @@ export function TicketsPage(){
 
  const addComment=async()=>{
   if(!selected?.id||!profile)return
-  const body=prompt('Commentaire')
-  if(!body?.trim())return
-  const {error}=await supabase.from('ticket_comments').insert({ticket_id:selected.id,author_id:profile.id,body:body.trim()})
-  if(error)notify(error.message,'error');else{notify('Commentaire ajouté.');await qc.invalidateQueries({queryKey:['comments',selected.id]})}
+  const body=commentText.trim()
+  if(!body){notify('Saisis un commentaire avant de l’ajouter.','error');return}
+  try{
+   setCommentBusy(true)
+   const {error}=await supabase.from('ticket_comments').insert({ticket_id:selected.id,author_id:profile.id,body})
+   if(error){notify(error.message,'error');return}
+   setCommentText('')
+   notify('Commentaire ajouté.')
+   await qc.invalidateQueries({queryKey:['comments',selected.id]})
+  }finally{setCommentBusy(false)}
  }
 
  const close=async()=>{
@@ -299,8 +307,14 @@ export function TicketsPage(){
    </form>
 
    {selected.id&&<>
-    <div className="actions ticket-detail-actions"><button className="secondary" onClick={()=>void addComment()}><MessageSquarePlus size={15}/> Commenter</button><button className="primary" onClick={()=>void close()} disabled={!!selected.closed_at}><CheckCircle2 size={15}/> Clôturer</button>{selected.closed_at&&<button className="ghost" onClick={()=>void reopen()}><RotateCcw size={15}/> Rouvrir</button>}</div>
+    <div className="actions ticket-detail-actions"><button className="primary" onClick={()=>void close()} disabled={!!selected.closed_at}><CheckCircle2 size={15}/> Clôturer</button>{selected.closed_at&&<button className="ghost" onClick={()=>void reopen()}><RotateCcw size={15}/> Rouvrir</button>}</div>
     {selected.resolution_comment&&<div className="detail-description"><b>Résolution :</b> {selected.resolution_comment}</div>}
+
+    <section className="ticket-comment-composer">
+     <div className="ticket-comment-composer-head"><div><MessageSquarePlus size={16}/><b>Ajouter un commentaire</b></div><span>{commentText.length} caractère{commentText.length>1?'s':''}</span></div>
+     <textarea value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Saisis ici le compte rendu, les actions réalisées, le constat ou les informations à transmettre…" rows={7}/>
+     <button className="secondary ticket-comment-submit" onClick={()=>void addComment()} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Ajouter le commentaire'}</button>
+    </section>
 
     <h3 className="section-title"><Mail size={15}/> Notifications Outlook ({ticketNotifications.length})</h3>
     <div className="planning-history-list">{ticketNotifications.length===0&&<span className="muted">Aucune notification enregistrée.</span>}{ticketNotifications.map((n:any)=><details className="compact-history" key={n.id}><summary><b>{n.notification_type} • {n.confirmation_status==='confirmed'?'Envoyée':n.confirmation_status==='pending'?'À confirmer':'Non envoyée'}</b><small>{excelDate(n.created_at)} • {techName(n.actor_id)}</small></summary><div className="notification-history-detail"><b>{n.subject}</b><span>Destinataires : {(n.recipients||[]).join('; ')||'Aucun'}</span><span>Outlook ouvert : {n.outlook_opened_at?excelDate(n.outlook_opened_at):'Non tracé'}</span><pre>{n.body}</pre></div></details>)}</div>
