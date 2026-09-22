@@ -180,7 +180,7 @@ export function InventoryPage(){
  const selectedAvailable=selected?inventoryAvailable(selected):0
  const movementTypeOptions=manager
   ?['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN','ADJUSTMENT_IN','ADJUSTMENT_OUT','LOST','BROKEN','RETIRED']
-  :['INTERVENTION_USE']
+  :['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN']
 
  return <div className="page inventory-page">
   <header className="page-head">
@@ -249,10 +249,11 @@ export function InventoryPage(){
       </div>
       {selected.description&&<div className="detail-description">{selected.description}</div>}
       <div className="detail-actions inventory-movement-actions">
-       {manager&&<button className="secondary" onClick={()=>openMovement(selected,'STOCK_IN')}><ArrowDownToLine size={14}/> Entrée</button>}
-       {manager&&<button className="ghost" onClick={()=>openMovement(selected,'STOCK_OUT')}><ArrowUpFromLine size={14}/> Sortie</button>}
+       <button className="secondary" onClick={()=>openMovement(selected,'STOCK_IN')}><ArrowDownToLine size={14}/> Entrée</button>
+       <button className="ghost" onClick={()=>openMovement(selected,'STOCK_OUT')}><ArrowUpFromLine size={14}/> Sortie</button>
        <button className="primary" onClick={()=>openMovement(selected,'INTERVENTION_USE')}><Wrench size={14}/> Intervention</button>
-       {manager&&<button className="ghost" onClick={()=>void reserve(selected)}>Réserver</button>}
+       <button className="ghost" onClick={()=>openMovement(selected,'RETURN')}>Retour</button>
+       <button className="ghost" onClick={()=>void reserve(selected)}>Réserver</button>
       </div>
 
       {movementOpen&&<form className="movement-form card" id="inventory-movement-form" onSubmit={recordMovement}>
