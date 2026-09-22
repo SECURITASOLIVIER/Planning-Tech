@@ -23,7 +23,7 @@
           <div><b style="font-size:18px">Accès Manager</b><div class="muted" style="font-size:11px">Tous les tickets, utilisateurs, KPI, configuration et export Excel</div></div>
         </div>
         <form id="managerLoginForm">
-          <div class="field"><label>Email Manager</label><input id="managerEmail" class="input" type="email" required autocomplete="username"></div>
+          <div class="field"><label>Email Manager</label><input id="managerEmail" class="input" type="email" value="olivier.marchegay@securitas.fr" required autocomplete="username"></div>
           <div class="field"><label>Mot de passe</label><input id="managerPassword" class="input" type="password" required autocomplete="current-password"></div>
           <button class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
         </form>
@@ -51,6 +51,7 @@
       </div>
     </div>
 
+    <div id="authMessage" class="notice hidden" style="margin-top:14px;font-weight:700"></div>
     <style>
       @media(max-width:760px){.accessGrid{grid-template-columns:1fr!important}}
     </style>
@@ -233,6 +234,11 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="./app.js"></script>
+<script>
+if(!window.supabase){
+  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+}
+</script>
+<script src="./app.js?v=20260922-1758"></script>
 </body>
 </html>
