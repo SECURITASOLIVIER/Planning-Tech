@@ -111,7 +111,9 @@ export function TicketsPage(){
    ...distribution.map((x:any)=>String(x.email).trim().toLowerCase()),
    ...recipientEmails
   ].filter(Boolean))]
-  const built=buildTicketNotification(type,ticket,clientName(ticket.customer_id),techName(ticket.assigned_to))
+  const {data:historyData,error:historyError}=await supabase.rpc('ticket_notification_history',{p_ticket_id:ticket.id})
+  if(historyError)notify('Historique du mail incomplet : '+historyError.message,'error')
+  const built=buildTicketNotification(type,ticket,clientName(ticket.customer_id),techName(ticket.assigned_to),historyData||undefined)
   const {data,error}=await supabase.rpc('begin_ticket_notification',{
    p_ticket_id:ticket.id,p_notification_type:type,p_subject:built.subject,p_body:built.body,p_recipients:recipientList
   })
