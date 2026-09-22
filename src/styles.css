@@ -209,3 +209,29 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .communication-detail-actions{grid-template-columns:1fr 1fr}
  .communications-page .detail-form textarea{min-height:180px}
 }
+
+/* Activity & time tracking */
+.activity-clock-card{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:11px}
+.activity-clock-block{border:1px solid #e1eaf2;background:#f9fcff;border-radius:11px;padding:10px;display:grid;gap:8px}
+.activity-clock-block>div:first-child{display:flex;align-items:center;gap:7px;color:#254b6e}
+.activity-start-buttons,.activity-work-start{display:flex;gap:6px;flex-wrap:wrap}
+.activity-work-start select{flex:1;min-width:150px}
+.live-badge{display:inline-flex;width:max-content;max-width:100%;background:#e8f7f0;color:#08744c;border-radius:999px;padding:5px 8px;font-size:10px;font-weight:850}
+.activity-presets{margin-bottom:8px}.activity-filters{grid-template-columns:repeat(3,minmax(140px,220px))}
+.client-kpi-list,.activity-log-list{display:grid;gap:6px;max-height:320px;overflow:auto}
+.client-kpi-row,.activity-log-row{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e7eef5;background:#fbfdff;border-radius:10px;padding:9px}
+.client-kpi-row>div,.activity-log-row>div{min-width:0;display:grid;gap:2px}
+.client-kpi-row b,.activity-log-row b{font-size:11px}.client-kpi-row small,.activity-log-row small{font-size:9px;color:var(--muted)}
+.client-kpi-row strong,.activity-log-row strong{white-space:nowrap;color:#0d4578;font-size:12px}
+.ticket-work-actions button{display:flex;align-items:center;gap:5px}
+@media(max-width:760px){
+ .activity-clock-card{grid-template-columns:1fr}
+ .activity-filters{grid-template-columns:1fr 1fr}
+}
+@media(max-width:640px){
+ .activity-start-buttons,.activity-work-start{display:grid;grid-template-columns:1fr 1fr}
+ .activity-start-buttons .primary,.activity-work-start select:first-child{grid-column:1/-1}
+ .activity-work-start button{grid-column:1/-1}
+ .activity-filters{grid-template-columns:1fr 1fr}
+ .client-kpi-list,.activity-log-list{max-height:none}
+}
