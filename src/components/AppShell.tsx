@@ -1,6 +1,7 @@
 import { NavLink,Outlet } from 'react-router-dom'
 import { Activity,Boxes,CalendarDays,ClipboardList,FileClock,Gauge,LogOut,Settings,Users,Building2,MessageSquareText } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
+import { ToastHost } from './ToastHost'
 
 const item=(to:string,label:string,Icon:React.ComponentType<{size?:number}>)=>({to,label,Icon})
 
@@ -21,7 +22,7 @@ export function AppShell(){
    item('/configuration','Configuration',Settings),
    ]:[item('/inventory','Matériel',Boxes)])
  ]
- return <div className="workspace">
+ return <div className="workspace"><ToastHost/>
   <header className="topbar">
    <div className="top-dots"><i/><i/><i/></div>
    <div className="top-brand"><b>Planning Securitas</b><small>Planning ITSM sécurisé</small></div>
