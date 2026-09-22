@@ -1,12 +1,14 @@
 import { useMemo,useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Bar,BarChart,CartesianGrid,Legend,Line,LineChart,ResponsiveContainer,Tooltip,XAxis,YAxis } from 'recharts'
-import { Download,X } from 'lucide-react'
+import { Download } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { presetRange } from '../lib/dateRange'
 import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
 import type { Customer,Profile,Ticket } from '../lib/types'
+import { DetailDrawer } from '../components/DetailDrawer'
+import { notify } from '../lib/notify'
 
 type Metric='backlog'|'new_count'|'in_progress'|'waiting'|'closed'|'blocking'|'reopened'|null
 
@@ -16,6 +18,7 @@ export function KpiPage(){
  const [to,setTo]=useState(initial.to)
  const [metric,setMetric]=useState<Metric>(null)
  const [tech,setTech]=useState('')
+ const [selectedTicket,setSelectedTicket]=useState<Ticket|null>(null)
 
  const {data,isFetching}=useQuery({
   queryKey:['kpi',from,to],
@@ -85,7 +88,7 @@ export function KpiPage(){
    resolution:t.resolution_comment||'',cloture:excelDate(t.closed_at),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
   })))
   addSheet(wb,'Filtres',[{du:from,au:to,indicateur:metric||'Tous',technicien:tech?techName(tech):'Tous',tickets_detail:detailTickets.length}])
-  downloadWorkbook(wb,'PlanningSecuritas_KPI_'+from+'_'+to+'.xlsx')
+  downloadWorkbook(wb,'PlanningSecuritas_KPI_'+from+'_'+to+'.xlsx');notify('Export KPI téléchargé.')
  }
 
  const metricTitle:Record<string,string>={
@@ -122,13 +125,12 @@ export function KpiPage(){
    <div className="kpi"><b>{s.closure_rate??0}%</b><span>Taux de clôture</span></div>
   </section>
 
-  {(metric||tech)&&<section className="card inline-data-panel">
-   <div className="inline-data-head"><div><small>Données accessibles</small><h2>{metric?metricTitle[metric]:'Tickets du technicien'}{tech?' • '+techName(tech):''}</h2></div><button className="ghost small" onClick={()=>{setMetric(null);setTech('')}}><X size={15}/></button></div>
-   {metric==='reopened'?<div className="alert">Le compteur des réouvertures provient de l’historique. Consulte l’onglet Historique pour voir chaque réouverture.</div>:<>
-    <div className="table-wrap desktop-only"><table><thead><tr><th>Ticket</th><th>Client</th><th>Statut</th><th>Priorité</th><th>Technicien</th><th>Planifié</th><th>Description</th></tr></thead><tbody>{detailTickets.map(t=><tr key={t.id}><td><b>{t.ticket_number}</b><br/><small>{t.subject}</small></td><td>{clientName(t.customer_id)}</td><td><span className="badge">{t.status}</span></td><td>{t.priority}</td><td>{techName(t.assigned_to)}</td><td>{excelDate(t.planned_start)||'—'}</td><td>{t.description||'—'}</td></tr>)}</tbody></table></div>
-    <div className="module-mobile-list">{detailTickets.map(t=><article className="module-mobile-card" key={t.id}><div className="module-mobile-head"><div><b>{t.ticket_number} • {t.subject}</b><small>{clientName(t.customer_id)}</small></div><span className="badge">{t.status}</span></div><div className="module-mobile-meta"><div><span>Technicien</span><b>{techName(t.assigned_to)}</b></div><div><span>Priorité</span><b>{t.priority}</b></div><div><span>Planifié</span><b>{excelDate(t.planned_start)||'—'}</b></div><div><span>Bloquant</span><b>{t.is_blocking?'Oui':'Non'}</b></div></div>{t.description&&<div className="detail-description">{t.description}</div>}</article>)}</div>
+  {(metric||tech)&&<DetailDrawer title={metric?metricTitle[metric]:'Tickets du technicien'} subtitle={(tech?techName(tech)+' • ':'')+detailTickets.length+' ticket(s)'} onClose={()=>{setMetric(null);setTech('');setSelectedTicket(null)}}>
+   {metric==='reopened'?<div className="alert">Le compteur des réouvertures provient de l’historique. Consulte l’onglet Historique pour chaque réouverture.</div>:<>
+    {selectedTicket&&<div className="drawer-selected-detail"><h3>{selectedTicket.ticket_number} • {selectedTicket.subject}</h3><div className="detail-summary-grid"><div><span>Client</span><b>{clientName(selectedTicket.customer_id)}</b></div><div><span>Technicien</span><b>{techName(selectedTicket.assigned_to)}</b></div><div><span>Statut</span><b>{selectedTicket.status}</b></div><div><span>Priorité</span><b>{selectedTicket.priority}</b></div><div><span>Catégorie</span><b>{selectedTicket.category}</b></div><div><span>Type</span><b>{selectedTicket.intervention_type}</b></div><div><span>Planifié</span><b>{excelDate(selectedTicket.planned_start)||'—'}</b></div><div><span>Bloquant</span><b>{selectedTicket.is_blocking?'Oui':'Non'}</b></div></div>{selectedTicket.description&&<div className="detail-description">{selectedTicket.description}</div>}</div>}
+    <div className="drawer-list">{detailTickets.map(t=><button className={'drawer-list-row '+(selectedTicket?.id===t.id?'selected':'')} key={t.id} onClick={()=>setSelectedTicket(t)}><div><b>{t.ticket_number} • {t.subject}</b><small>{clientName(t.customer_id)} • {techName(t.assigned_to)} • {excelDate(t.planned_start)||'Non planifié'}</small></div><span className="badge">{t.status}</span></button>)}</div>
    </>}
-  </section>}
+  </DetailDrawer>}
 
   <section className="grid two chart-grid">
    <div className="card"><h3 className="section-title">Créés / clôturés dans le temps</h3><div className="chart-box"><ResponsiveContainer width="100%" height="100%"><LineChart data={timeline}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="period"/><YAxis allowDecimals={false}/><Tooltip/><Legend/><Line type="monotone" dataKey="created" name="Créés"/><Line type="monotone" dataKey="closed" name="Clôturés"/></LineChart></ResponsiveContainer></div></div>
