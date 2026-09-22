@@ -244,7 +244,7 @@ if(!window.supabase){
   document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
-<script src="./app.js?v=20260922-1831"></script>
+<script src="./app-v2.js?v=1"></script>
 <script>
 (function(){
   const box=document.getElementById('authMessage');
@@ -283,7 +283,22 @@ if(!window.supabase){
 
       show('Connexion réussie en '+(role==='manager'?'Manager':'Technicien')+'. Chargement…');
       if(typeof window.enterSession!=='function'){
-        show('Connexion réussie, mais la fonction de chargement de l’application est indisponible.');
+        show('Connexion réussie. Chargement du module principal…');
+        try{
+          await new Promise((resolve,reject)=>{
+            const s=document.createElement('script');
+            s.src='./app-v2.js?v=2';
+            s.onload=resolve;
+            s.onerror=()=>reject(new Error('app-v2.js introuvable'));
+            document.head.appendChild(s);
+          });
+        }catch(loadErr){
+          show('Connexion réussie, mais le module principal ne se charge pas : '+(loadErr?.message||loadErr));
+          return
+        }
+      }
+      if(typeof window.enterSession!=='function'){
+        show('Connexion réussie, mais le module principal ne s’est pas initialisé.');
         return
       }
       try{
