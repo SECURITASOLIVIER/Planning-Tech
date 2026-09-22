@@ -65,3 +65,45 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .fc .fc-timegrid-event .fc-event-time{font-size:8px!important}
  .login-wrap{padding:12px}.login-shell{padding:16px}
 }
+
+.mobile-only{display:none}
+.config-tabs{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px}
+.inventory-new-btn{display:flex;align-items:center;gap:6px}
+@media(max-width:640px){
+ .desktop-only{display:none!important}
+ .mobile-only{display:grid!important}
+ .inventory-page .page-head{grid-template-columns:1fr}
+ .inventory-new-btn{width:100%;justify-content:center;min-height:44px;font-size:13px;white-space:nowrap;overflow:hidden}
+ .inventory-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ .inventory-kpis .kpi{min-height:78px;padding:10px}
+ .inventory-kpis .kpi b{font-size:20px}
+ .inventory-kpis .kpi span{font-size:8px}
+ .inventory-mobile-list{gap:8px}
+ .inventory-mobile-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:11px;box-shadow:0 6px 20px rgba(8,34,65,.05);display:grid;gap:9px}
+ .inventory-mobile-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+ .inventory-mobile-head>div{min-width:0;display:grid;gap:2px}
+ .inventory-mobile-head b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .inventory-mobile-head small{font-size:9px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .inventory-mobile-head strong{font-size:13px;color:#0d4578;white-space:nowrap}
+ .inventory-mobile-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+ .inventory-mobile-stats>div{background:#f7fafd;border:1px solid #e4ecf4;border-radius:9px;padding:7px 5px;text-align:center;display:grid;gap:2px}
+ .inventory-mobile-stats span{font-size:7px;text-transform:uppercase;color:var(--muted);font-weight:800}
+ .inventory-mobile-stats b{font-size:14px}
+ .inventory-mobile-location{font-size:10px;color:#60758d}
+ .inventory-mobile-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+ .inventory-mobile-actions button{width:100%;font-size:10px;padding:7px 4px}
+ .inventory-page .panel{margin-top:4px}
+ .inventory-page .panel h2{font-size:16px}
+ .config-tabs{display:flex;flex-wrap:nowrap;gap:5px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:3px}
+ .config-tabs::-webkit-scrollbar{display:none}
+ .config-tabs button{flex:0 0 auto;white-space:nowrap;padding:8px 10px;font-size:11px}
+ .config-mobile-list{gap:7px}
+ .config-mobile-card{background:#fff;border:1px solid #e4ecf4;border-radius:12px;padding:10px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px;align-items:center}
+ .config-mobile-card>div:first-child{min-width:0;display:grid;gap:3px}
+ .config-mobile-card code{font-size:10px;color:#3a536d;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+ .config-mobile-card b{font-size:13px}
+ .config-mobile-actions{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr;gap:5px}
+ .config-mobile-actions button{width:100%}
+ .config-page>.grid.two{grid-template-columns:1fr!important}
+ .config-page .card{padding:10px}
+}
