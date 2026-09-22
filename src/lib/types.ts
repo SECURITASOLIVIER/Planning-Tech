@@ -33,3 +33,16 @@ export interface InventoryItem{
 }
 
 export const inventoryAvailable=(i:InventoryItem)=>i.quantity_total-i.quantity_reserved-i.quantity_assigned
+
+
+export interface InventoryMovement{
+ id:number; item_id:string; movement_type:string; quantity:number; old_total:number|null; new_total:number|null;
+ ticket_id:string|null; ticket_number_snapshot:string|null; allocation_id:string|null; assignee:string|null;
+ actor_id:string|null; note:string|null; reason:string; created_at:string;
+}
+
+export interface CommunicationTemplate{
+ id:string; theme:string; channel:'Outlook'|'Teams'|'ServiceNow'|'OneNote'|'Divers'|'PIM / Accès';
+ title:string; subject:string|null; body:string; scope:'team'|'personal'; owner_id:string|null;
+ is_system:boolean; active:boolean; sort_order:number; created_by:string|null; created_at:string; updated_at:string;
+}
