@@ -5,7 +5,7 @@ import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import type { CommunicationTemplate } from '../lib/types'
 
-const channels=['Outlook','Teams','ServiceNow','OneNote','Divers','PIM / Accès'] as const
+const channels=['Outlook','Teams','ServiceNow','OneNote','Divers'] as const
 
 export function CommunicationsPage(){
  const {profile}=useAuth()
@@ -102,14 +102,14 @@ export function CommunicationsPage(){
 
  return <div className="page communications-page">
   <header className="page-head">
-   <div><h1>Centre de communication</h1><p>Modèles Outlook, Teams, ServiceNow, OneNote, PIM et textes à copier.</p></div>
+   <div><h1>Centre de communication</h1><p>Modèles terrain pour réseau, vidéosurveillance, alarme, chantier, maintenance, recette et compte rendu.</p></div>
    <button className="primary page-primary-action" onClick={newTemplate}><Plus size={16}/> Nouveau modèle</button>
   </header>
 
   <section className="card module-filter-card">
    <div className="module-filter-title"><MessageSquareText size={16}/><b>Recherche & filtres</b><span>{rows.length} modèle{rows.length>1?'s':''}</span></div>
    <div className="module-filter-grid">
-    <label className="wide-filter">Recherche<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Ticket, Outlook, caméra, PIM, relance…"/></label>
+    <label className="wide-filter">Recherche<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Caméra, NVR, switch, alarme, chantier, maintenance…"/></label>
     <label>Thème<select value={theme} onChange={e=>setTheme(e.target.value)}><option value="">Tous</option>{themes.map(x=><option key={x}>{x}</option>)}</select></label>
     <label>Canal<select value={channel} onChange={e=>setChannel(e.target.value)}><option value="">Tous</option>{channels.map(x=><option key={x}>{x}</option>)}</select></label>
    </div>
@@ -143,7 +143,7 @@ export function CommunicationsPage(){
     </>}
 
     <form className="form-grid detail-form" onSubmit={save} key={selected?.id||'new-template'}>
-     <label>Thème<input name="theme" defaultValue={selected?.theme||''} placeholder="Tickets, Réseau, PIM…" required/></label>
+     <label>Thème<input name="theme" defaultValue={selected?.theme||''} placeholder="Réseau, Vidéosurveillance, Alarme, Chantier…" required/></label>
      <label>Canal<select name="channel" defaultValue={selected?.channel||'Outlook'}>{channels.map(x=><option key={x}>{x}</option>)}</select></label>
      <label className="full">Titre<input name="title" defaultValue={selected?.title||''} required/></label>
      <label className="full">Objet<input name="subject" defaultValue={selected?.subject||''} placeholder="Optionnel pour Teams / ServiceNow / OneNote"/></label>
