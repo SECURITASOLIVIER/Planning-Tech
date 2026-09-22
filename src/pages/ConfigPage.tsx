@@ -63,7 +63,7 @@ export function ConfigPage(){
    setBackupBusy(true);notify('Préparation de la sauvegarde complète…','info')
    const counts=await exportCompleteBusinessDatabase()
    await supabase.rpc('log_app_action',{p_action:'database_business_backup_exported',p_target_type:'database',p_target_id:null,p_details:{tables:Object.keys(counts).length,row_counts:counts}})
-   notify('Sauvegarde complète téléchargée.')
+   notify('Sauvegarde BDD complète Excel téléchargée.')
   }catch(e:any){notify('Erreur sauvegarde : '+(e?.message||'échec'),'error')}
   finally{setBackupBusy(false)}
  }
@@ -99,6 +99,6 @@ export function ConfigPage(){
    </div>
   </section>
 
-  <section className="card backup-card"><div className="backup-head"><div><DatabaseBackup size={19}/><div><h3 className="section-title">Sauvegarde complète des données métier</h3><p className="muted">Export JSON versionné pour sauvegarde et future réintégration. Les secrets, mots de passe Auth et clés serveur sont exclus.</p></div></div><button className="secondary" disabled={backupBusy} onClick={()=>void backup()}><Download size={15}/>{backupBusy?' Préparation…':' Exporter la base métier'}</button></div></section>
+  <section className="card backup-card"><div className="backup-head"><div><DatabaseBackup size={19}/><div><h3 className="section-title">Sauvegarde complète BDD Excel</h3><p className="muted">Classeur XLSX avec toutes les tables public, une ou plusieurs feuilles par table, les ID, relations, colonnes et ordre de restauration pour une future réintégration. Les secrets, mots de passe Auth et clés serveur sont exclus.</p></div></div><button className="secondary" disabled={backupBusy} onClick={()=>void backup()}><Download size={15}/>{backupBusy?' Préparation…':' Exporter toute la BDD (.xlsx)'}</button></div></section>
  </div>
 }
