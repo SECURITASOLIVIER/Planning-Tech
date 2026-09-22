@@ -13,7 +13,7 @@ import { ConfigPage } from './pages/ConfigPage'
 import { AuditPage } from './pages/AuditPage'
 import { ChangePasswordPage } from './pages/ChangePasswordPage'
 import { CommunicationsPage } from './pages/CommunicationsPage'
-import { ActivityPage } from './pages/ActivityPage'
+import { HistoryPage } from './pages/HistoryPage'
 
 function Guard({manager=false}:{manager?:boolean}){
  const {session,profile,loading}=useAuth()
@@ -33,7 +33,7 @@ export default function App(){
    <Route path="tickets" element={<TicketsPage/>}/>
    <Route path="inventory" element={<InventoryPage/>}/>
    <Route path="communications" element={<CommunicationsPage/>}/>
-   <Route path="activity" element={<ActivityPage/>}/>
+   <Route path="history" element={<HistoryPage/>}/>
   </Route>
   <Route element={<Guard manager/>}>
    <Route path="users" element={<UsersPage/>}/>
