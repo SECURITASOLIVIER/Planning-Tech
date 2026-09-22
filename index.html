@@ -25,7 +25,7 @@
         <form id="managerLoginForm">
           <div class="field"><label>Email Manager</label><input id="managerEmail" class="input" type="email" value="olivier.marchegay@securitas.fr" required autocomplete="username"></div>
           <div class="field"><label>Mot de passe</label><input id="managerPassword" class="input" type="password" required autocomplete="current-password"></div>
-          <button class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
+          <button id="managerLoginBtn" class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
         </form>
 
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid #dce6f1">
@@ -43,7 +43,7 @@
         <form id="techLoginForm">
           <div class="field"><label>Email Technicien</label><input id="techEmail" class="input" type="email" required autocomplete="username"></div>
           <div class="field"><label>Mot de passe</label><input id="techPassword" class="input" type="password" required autocomplete="current-password"></div>
-          <button class="btn primary" type="submit" style="width:100%">Entrer en Technicien</button>
+          <button id="techLoginBtn" class="btn primary" type="submit" style="width:100%">Entrer en Technicien</button>
         </form>
         <div class="notice" style="margin-top:14px">
           Les comptes Techniciens sont créés par un Manager depuis la rubrique <b>Utilisateurs</b>.
@@ -233,12 +233,90 @@
 <div id="toast" class="toast"></div>
 </div>
 
+<script>
+window.addEventListener('error',function(e){
+  const box=document.getElementById('authMessage');
+  if(box){box.textContent='Erreur JavaScript : '+(e.message||'inconnue');box.classList.remove('hidden');}
+});
+window.addEventListener('unhandledrejection',function(e){
+  const box=document.getElementById('authMessage');
+  const msg=e.reason?.message||String(e.reason||'Erreur inconnue');
+  if(box){box.textContent='Erreur technique : '+msg;box.classList.remove('hidden');}
+});
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 if(!window.supabase){
   document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
 }
 </script>
-<script src="./app.js?v=20260922-1758"></script>
+<script src="./app.js?v=20260922-1815"></script>
+<script>
+(function(){
+  const box=document.getElementById('authMessage');
+  const show=(m)=>{if(box){box.textContent=m;box.classList.remove('hidden')}};
+  if(!window.supabase?.createClient){show('Supabase ne se charge pas dans le navigateur.');return}
+  const authClient=window.supabase.createClient(
+    'https://ilxdqvbcvcwfklvkyfoj.supabase.co',
+    'sb_publishable_7f0bDxce4zdPCr5_4go4Wg_S6wlEPFY'
+  );
+
+  async function directLogin(role,email,password){
+    show('Connexion en cours…');
+    try{
+      const {data,error}=await authClient.auth.signInWithPassword({
+        email:String(email||'').trim().toLowerCase(),
+        password:String(password||'')
+      });
+      if(error){show('Connexion refusée : '+error.message);return}
+      if(!data?.session?.user){show('Connexion impossible : Supabase n’a retourné aucune session.');return}
+
+      const {data:profile,error:profileError}=await authClient
+        .from('profiles').select('*').eq('id',data.session.user.id).single();
+
+      if(profileError||!profile){
+        show('Identifiants corrects mais profil applicatif introuvable : '+(profileError?.message||'profil absent'));
+        return
+      }
+      if(profile.role!==role){
+        await authClient.auth.signOut();
+        show(role==='manager'?'Ce compte n’est pas Manager.':'Ce compte n’est pas Technicien.');
+        return
+      }
+      if(!profile.active){
+        await authClient.auth.signOut();show('Ce compte est désactivé.');return
+      }
+
+      show('Connexion réussie en '+(role==='manager'?'Manager':'Technicien')+'. Chargement…');
+      setTimeout(()=>location.reload(),500);
+    }catch(err){
+      show('Erreur technique : '+(err?.message||err));
+      console.error(err);
+    }
+  }
+
+  const mf=document.getElementById('managerLoginForm');
+  const tf=document.getElementById('techLoginForm');
+  if(mf){
+    mf.onsubmit=function(e){
+      e.preventDefault();
+      directLogin('manager',
+        document.getElementById('managerEmail').value,
+        document.getElementById('managerPassword').value);
+      return false;
+    };
+  }
+  if(tf){
+    tf.onsubmit=function(e){
+      e.preventDefault();
+      directLogin('technician',
+        document.getElementById('techEmail').value,
+        document.getElementById('techPassword').value);
+      return false;
+    };
+  }
+  show('Connexion prête.');
+})();
+</script>
 </body>
 </html>
