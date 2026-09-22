@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-export default defineConfig({
+export default defineConfig(({command})=>({
   plugins:[react()],
-  base: process.env.GITHUB_ACTIONS ? '/Planning-Tech/' : '/',
+  base: command==='build' ? '/Planning-Tech/' : '/',
   build:{outDir:'dist',sourcemap:true}
-})
+}))
