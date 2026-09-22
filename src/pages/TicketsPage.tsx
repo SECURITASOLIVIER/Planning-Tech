@@ -74,6 +74,10 @@ export function TicketsPage(){
  const techName=(id:string|null|undefined)=>profiles.find(p=>p.id===id)?.display_name||'Non affecté'
  const clientName=(id:string|null|undefined)=>customers.find(c=>c.id===id)?.name||'—'
  const requesters=useMemo(()=>[...new Set(tickets.map(t=>t.requester).filter((x):x is string=>!!x?.trim()))].sort((a,b)=>a.localeCompare(b,'fr')),[tickets])
+ const selectedMaterialCost=useMemo(()=>movements.filter((m:any)=>m.movement_type==='INTERVENTION_USE').reduce((sum:number,m:any)=>sum+Number(m.total_cost_snapshot||0),0),[movements])
+ const selectedInterventionCost=Number(selected?.intervention_cost||0)
+ const selectedTotalCost=selectedInterventionCost+selectedMaterialCost
+ const money=(v:number)=>v.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})
 
  const rows=useMemo(()=>tickets.filter(t=>{
   const q=search.trim().toLowerCase()
@@ -155,6 +159,10 @@ export function TicketsPage(){
    general_incident_label:String(fd.get('general_incident_label')||'')||null,
    planned_start:fd.get('planned_start')?new Date(String(fd.get('planned_start'))).toISOString():null,
    planned_end:fd.get('planned_end')?new Date(String(fd.get('planned_end'))).toISOString():null
+  }
+  if(manager){
+   row.intervention_cost=Math.max(0,Number(fd.get('intervention_cost')||0))
+   row.intervention_cost_note=String(fd.get('intervention_cost_note')||'').trim()||null
   }
 
   let saved:Ticket
@@ -370,14 +378,15 @@ export function TicketsPage(){
     technicien_id:t.assigned_to||'',technicien:techName(t.assigned_to),date_arrivee:excelDate(t.arrival_at),debut_planifie:excelDate(t.planned_start),
     fin_planifie:excelDate(t.planned_end),incident_bloquant:t.is_blocking?'Oui':'Non',incident_parent:t.parent_incident||'',
     incident_general:t.general_incident_label||'',commentaire_resolution:t.resolution_comment||'',closed_by:t.closed_by||'',
-    cloture_le:excelDate(t.closed_at),created_by:t.created_by||'',auteur_creation:techName(t.created_by),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
+    cloture_le:excelDate(t.closed_at),cout_intervention:Number(t.intervention_cost||0),note_cout_intervention:t.intervention_cost_note||'',
+    created_by:t.created_by||'',auteur_creation:techName(t.created_by),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
    })))
    addSheet(wb,'Destinataires ticket',(recipientsQ.data||[]).map((r:any)=>({id:r.id,ticket_id:r.ticket_id,ticket:tickets.find(t=>t.id===r.ticket_id)?.ticket_number||'',email:r.email,ajoute_par:r.added_by||'',date:excelDate(r.created_at)})))
    addSheet(wb,'Notifications Outlook',(notificationsQ.data||[]).map((n:any)=>({id:n.id,ticket_id:n.ticket_id,ticket:tickets.find(t=>t.id===n.ticket_id)?.ticket_number||'',type:n.notification_type,objet:n.subject,message:n.body,destinataires:(n.recipients||[]).join('; '),acteur_id:n.actor_id||'',acteur:techName(n.actor_id),outlook_ouvert_le:excelDate(n.outlook_opened_at),confirmation:n.confirmation_status,confirme_le:excelDate(n.confirmed_at),cree_le:excelDate(n.created_at)})))
    addSheet(wb,'Commentaires',(commentsQ.data||[]).map((c:any)=>({id:c.id,ticket_id:c.ticket_id,ticket:tickets.find(t=>t.id===c.ticket_id)?.ticket_number||'',auteur_id:c.author_id,auteur:c.author_name||techName(c.author_id),commentaire:c.body,date:excelDate(c.created_at)})))
    addSheet(wb,'Historique',(historyQ.data||[]).map((h:any)=>({id:h.id,ticket_id:h.ticket_id,ticket:tickets.find(t=>t.id===h.ticket_id)?.ticket_number||'',acteur_id:h.actor_id||'',acteur:techName(h.actor_id),action:h.action,date:excelDate(h.created_at),details:JSON.stringify(h.details||{}),...Object.fromEntries(Object.entries(h.details||{}).map(([k,v])=>['detail_'+k,typeof v==='object'?JSON.stringify(v):v]))})))
    addSheet(wb,'Matériel ticket',(materialsQ.data||[]).map((m:any)=>({id:m.id,ticket_id:m.ticket_id,ticket:tickets.find(t=>t.id===m.ticket_id)?.ticket_number||'',catalog_id:m.catalog_id||'',libelle:m.label,quantite:m.quantity,note:m.note||'',date:excelDate(m.created_at)})))
-   addSheet(wb,'Mouvements stock',(movementsQ.data||[]).map((m:any)=>({id:m.id,ticket_id:m.ticket_id||'',ticket:m.ticket_number_snapshot||tickets.find(t=>t.id===m.ticket_id)?.ticket_number||'',item_id:m.item_id,type:m.movement_type,quantite:m.quantity,ancien_total:m.old_total,nouveau_total:m.new_total,allocation_id:m.allocation_id||'',beneficiaire:m.assignee||'',acteur_id:m.actor_id||'',acteur:techName(m.actor_id),motif:m.reason||'',note:m.note||'',date:excelDate(m.created_at)})))
+   addSheet(wb,'Mouvements stock',(movementsQ.data||[]).map((m:any)=>({id:m.id,ticket_id:m.ticket_id||'',ticket:m.ticket_number_snapshot||tickets.find(t=>t.id===m.ticket_id)?.ticket_number||'',item_id:m.item_id,type:m.movement_type,quantite:m.quantity,prix_unitaire_snapshot:Number(m.unit_price_snapshot||0),cout_total_snapshot:Number(m.total_cost_snapshot||0),ancien_total:m.old_total,nouveau_total:m.new_total,allocation_id:m.allocation_id||'',beneficiaire:m.assignee||'',acteur_id:m.actor_id||'',acteur:techName(m.actor_id),motif:m.reason||'',note:m.note||'',date:excelDate(m.created_at)})))
    addSheet(wb,'Filtres',[{recherche:search||'',date_sur:dateField,du:from||'',au:to||'',technicien:technician?techName(technician):'Tous',demandeur:requester||'Tous',client:customer?clientName(customer):'Tous',statut:statusFilter||'Tous',priorite:priorityFilter||'Toutes',resultats:rows.length}])
    downloadWorkbook(wb,'PlanningSecuritas_Tickets_'+new Date().toISOString().slice(0,10)+'.xlsx')
    notify('Export détaillé des tickets téléchargé.')
@@ -411,6 +420,7 @@ export function TicketsPage(){
 
   {selected&&<DetailDrawer title={selected.id?selected.ticket_number||'Ticket':'Nouveau ticket'} subtitle={selected.id?'Détail complet du ticket':'Création'} onClose={()=>setSelected(null)}>
    {selected.id&&<div className="detail-summary-grid"><div><span>Demandeur</span><b>{selected.requester||'—'}</b></div><div><span>Client</span><b>{clientName(selected.customer_id)}</b></div><div><span>Technicien</span><b>{techName(selected.assigned_to)}</b></div><div><span>Statut</span><b>{selected.status||'—'}</b></div><div><span>Créé</span><b>{excelDate(selected.created_at)||'—'}</b></div><div><span>Modifié</span><b>{excelDate(selected.updated_at)||'—'}</b></div><div><span>Arrivée</span><b>{excelDate(selected.arrival_at)||'—'}</b></div><div><span>Clôture</span><b>{excelDate(selected.closed_at)||'—'}</b></div></div>}
+   {manager&&selected.id&&<section className="ticket-cost-summary"><div><span>Coût intervention</span><b>{money(selectedInterventionCost)}</b></div><div><span>Coût matériel utilisé</span><b>{money(selectedMaterialCost)}</b></div><div className="total"><span>Coût total</span><b>{money(selectedTotalCost)}</b></div>{selected.intervention_cost_note&&<small>{selected.intervention_cost_note}</small>}</section>}
 
    <form className="form-grid" onSubmit={save} key={selected.id||'new-ticket'}>
     <label className="full">Titre<input name="subject" defaultValue={selected.subject||''} required/></label>
@@ -435,6 +445,7 @@ export function TicketsPage(){
     <label>Incident général<input name="general_incident_label" defaultValue={selected.general_incident_label||''}/></label>
     <label>Début planifié<input name="planned_start" type="datetime-local" defaultValue={selected.planned_start?selected.planned_start.slice(0,16):''}/></label>
     <label>Fin planifiée<input name="planned_end" type="datetime-local" defaultValue={selected.planned_end?selected.planned_end.slice(0,16):''}/></label>
+    {manager&&<><label>Coût intervention (€)<input name="intervention_cost" type="number" min="0" step="0.01" defaultValue={Number(selected.intervention_cost||0)}/></label><label>Note coût<input name="intervention_cost_note" defaultValue={selected.intervention_cost_note||''} placeholder="Main-d’œuvre, déplacement, prestation…"/></label></>}
     <label className="full"><span><input name="blocking" type="checkbox" defaultChecked={selected.is_blocking}/> Incident bloquant</span></label>
     <label className="full">Description<textarea name="description" defaultValue={selected.description||''}/></label>
     <button className="primary full"><Save size={15}/> Enregistrer</button>
