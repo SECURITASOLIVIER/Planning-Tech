@@ -1,4 +1,4 @@
-# Super Support IT — Planning / ITSM
+# Planning Securitas — Planning / ITSM
 
 Refonte V2 de `Planning-Tech`.
 
