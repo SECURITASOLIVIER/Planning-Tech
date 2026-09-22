@@ -623,3 +623,19 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .ticket-material-row .actions{width:100%}
  .ticket-material-row .actions button:first-child{flex:1}
 }
+
+/* Manager intervention costs */
+.ticket-cost-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;border:1px solid #d9e7f1;background:#f8fbfe;border-radius:12px;padding:9px;margin:8px 0}
+.ticket-cost-summary>div{display:grid;gap:2px;background:#fff;border:1px solid #e5edf4;border-radius:9px;padding:8px}
+.ticket-cost-summary span{font-size:7px;text-transform:uppercase;color:var(--muted);font-weight:900}
+.ticket-cost-summary b{font-size:13px;color:#244968}
+.ticket-cost-summary .total{background:#eef9f4;border-color:#cce8da}
+.ticket-cost-summary .total b{color:#08774f}
+.ticket-cost-summary>small{grid-column:1/-1;font-size:8px;color:#5f768d;padding:2px 3px}
+.cost-kpis{margin-top:0}
+.cost-kpis .kpi b{font-size:18px}
+@media(max-width:640px){
+ .ticket-cost-summary{grid-template-columns:1fr 1fr}
+ .ticket-cost-summary .total{grid-column:1/-1}
+ .cost-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+}
