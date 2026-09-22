@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#050f22">
+<title>Super Support IT • Operations</title>
+<style>
+:root{
+  --ink:#0d1b30;--muted:#6e7f97;--line:#dce6f1;--surface:#ffffff;--soft:#f5f8fc;
+  --nav:#050f22;--nav2:#091d3e;--blue:#1677d2;--blue2:#42a5ff;--cyan:#36d6ff;
+  --red:#ef334b;--green:#0c9b68;--amber:#d28700;--purple:#7358d6;
+  --shadow:0 16px 40px rgba(7,24,53,.10);--radius:16px
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:#edf3f9;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}
+body{min-height:100vh;background:
+ radial-gradient(circle at 87% 0%,rgba(34,129,223,.11),transparent 28%),
+ linear-gradient(180deg,#eef5fb 0,#f7f9fc 42%,#edf3f8 100%)}
+
+/* HEADER */
+.topbar{
+ position:sticky;top:0;z-index:60;height:68px;padding:0 18px;display:flex;align-items:center;gap:14px;
+ color:#fff;background:linear-gradient(105deg,#030b1b 0%,#071a38 55%,#0b3972 100%);
+ border-bottom:1px solid rgba(93,190,255,.18);box-shadow:0 10px 32px rgba(0,15,40,.24)
+}
+.logoMark{display:flex;gap:5px;align-items:center}.logoMark i{width:10px;height:10px;border-radius:50%;background:var(--red);box-shadow:0 0 16px rgba(239,51,75,.85)}
+.brandBox{min-width:190px}.brandBox b{font-size:17px;letter-spacing:.2px}.brandBox small{display:block;color:#87b9e7;font-size:10px;margin-top:2px;letter-spacing:.08em;text-transform:uppercase}
+.globalSearch{flex:1;max-width:620px;position:relative}.globalSearch input{width:100%;border:1px solid rgba(133,200,255,.22);background:rgba(255,255,255,.08);color:#fff;border-radius:12px;padding:11px 42px 11px 14px;outline:none}.globalSearch input::placeholder{color:#9cb7d2}.globalSearch span{position:absolute;right:14px;top:10px;color:#89bce6}
+.live{margin-left:auto;display:flex;align-items:center;gap:7px;font-size:11px;color:#b7d5ef}.live i{width:8px;height:8px;border-radius:50%;background:#2bd68d;box-shadow:0 0 12px #2bd68d}
+.topNew{border:1px solid rgba(92,190,255,.42);background:linear-gradient(180deg,#1d83dc,#1064b7);color:#fff;border-radius:11px;padding:10px 14px;font-weight:800;box-shadow:0 0 24px rgba(48,149,234,.22)}
+
+/* APP SHELL */
+.app{display:grid;grid-template-columns:248px minmax(0,1fr);min-height:calc(100vh - 68px)}
+.sidebar{
+ background:linear-gradient(180deg,#07162e 0%,#061126 100%);color:#dbeaff;padding:14px 12px;
+ border-right:1px solid rgba(52,148,232,.16);position:sticky;top:68px;height:calc(100vh - 68px);overflow:auto
+}
+.sideSection{font-size:9px;text-transform:uppercase;letter-spacing:.13em;color:#668bab;margin:14px 10px 7px}
+.nav{
+ width:100%;display:flex;align-items:center;gap:11px;border:1px solid transparent;background:transparent;color:#bcd0e4;
+ padding:10px 11px;border-radius:11px;text-align:left;margin:2px 0;transition:.15s
+}
+.nav .ico{width:25px;height:25px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.04);color:#78bdf4}
+.nav .n{margin-left:auto;font-size:9px;color:#6f95b5}
+.nav.active,.nav:hover{color:#fff;background:linear-gradient(90deg,rgba(18,99,176,.46),rgba(20,79,139,.18));border-color:rgba(54,170,255,.22);box-shadow:inset 3px 0 0 #36b7ff}
+.teamMini{margin-top:15px;padding:10px;border:1px solid rgba(96,170,231,.13);border-radius:13px;background:rgba(255,255,255,.025)}
+.teamMini b{font-size:11px}.teamPeople{display:flex;margin-top:9px}.avatar{width:29px;height:29px;border:2px solid #07162e;margin-left:-5px;border-radius:9px;background:linear-gradient(135deg,#214d7d,#1972b8);display:grid;place-items:center;font-size:9px;color:#fff}.avatar:first-child{margin-left:0}
+
+.workspace{min-width:0;padding:18px}
+.pageHead{display:flex;align-items:center;gap:12px;margin-bottom:12px}.pageTitle b{display:block;font-size:20px}.pageTitle small{color:var(--muted);font-size:11px}.headActions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#fff;color:var(--ink);border-radius:10px;padding:9px 12px;font-weight:750;box-shadow:0 2px 5px rgba(12,38,70,.03)}
+.btn:hover{border-color:#b8cce0}.btn.primary{background:linear-gradient(180deg,#1a83dc,#1169bc);color:#fff;border-color:#1267b5}.btn.success{background:#0b9363;color:#fff;border-color:#087d54}.btn.danger{background:#d92d45;color:#fff;border-color:#c22137}.btn.ghost{background:#f6f9fc}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.select{border:1px solid var(--line);border-radius:10px;background:#fff;padding:9px 11px;color:var(--ink);outline:none}
+
+/* KPI */
+.kpiRow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin-bottom:13px}
+.kpi{
+ position:relative;overflow:hidden;background:rgba(255,255,255,.88);border:1px solid #d9e5f0;border-radius:14px;
+ padding:12px 13px;box-shadow:0 5px 18px rgba(9,34,69,.055)
+}
+.kpi:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#1b82da}
+.kpi[data-tone="green"]:before{background:var(--green)}.kpi[data-tone="amber"]:before{background:var(--amber)}.kpi[data-tone="red"]:before{background:var(--red)}.kpi[data-tone="purple"]:before{background:var(--purple)}
+.kpi b{font-size:23px;line-height:1;color:#0c3765}.kpi span{display:block;margin-top:5px;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+
+/* OUTLOOK-LIKE CALENDAR */
+.calendarCard{background:rgba(255,255,255,.94);border:1px solid #d6e3ef;border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
+.calendarToolbar{padding:11px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;border-bottom:1px solid var(--line);background:linear-gradient(180deg,#fff,#f9fbfd)}
+.weekNav{display:flex;gap:5px}.weekRange{font-size:16px;font-weight:850;margin-left:4px}.weekRange small{display:block;font-size:10px;color:var(--muted);font-weight:500;margin-top:2px}
+.calendarScroller{overflow:auto;max-height:calc(100vh - 300px);min-height:520px}
+.calendar{min-width:1180px;background:#fff}
+.calHead,.calRow{display:grid;grid-template-columns:72px repeat(7,minmax(140px,1fr))}
+.calHead{position:sticky;top:0;z-index:20;background:rgba(249,252,255,.98);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.corner{padding:12px 6px;font-size:9px;color:var(--muted);text-align:center;text-transform:uppercase}
+.dayHead{padding:9px 8px 10px;text-align:center;border-left:1px solid var(--line);position:relative}
+.dayHead b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#46627e}.dayHead strong{font-size:19px;display:block;color:#153552;margin-top:1px}.dayHead.today{background:linear-gradient(180deg,#eaf5ff,#f8fcff)}.dayHead.today strong{width:30px;height:30px;margin:2px auto 0;display:grid;place-items:center;border-radius:50%;background:#1677d2;color:#fff;box-shadow:0 0 18px rgba(22,119,210,.25)}
+.hour{padding:7px 8px;border-top:1px solid #eaf0f6;background:#fbfdff;color:#7b8da2;font-size:10px;text-align:right;position:sticky;left:0;z-index:5}
+.slot{position:relative;min-height:62px;padding:3px;border-left:1px solid #e5edf5;border-top:1px solid #eaf0f6;background:linear-gradient(180deg,#fff,#fff)}
+.slot.today{background:#fbfdff}.slot:hover{background:#f8fbfe}
+.ticket{
+ width:100%;position:relative;text-align:left;border:1px solid #bcd8f2;border-left:4px solid #1879cf;
+ border-radius:9px;background:linear-gradient(180deg,#eef7ff,#e6f2fc);padding:6px 7px;color:#103455;
+ margin-bottom:3px;box-shadow:0 3px 8px rgba(12,77,132,.08);transition:.12s
+}
+.ticket:hover{transform:translateY(-1px);box-shadow:0 6px 14px rgba(12,77,132,.13)}
+.ticket .tTop{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:850}.ticket .tSubject{font-size:11px;font-weight:750;margin:3px 0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ticket small{font-size:9px;color:#587491;display:flex;justify-content:space-between;gap:4px}
+.ticket.closed{border-left-color:var(--green);border-color:#b9e3d3;background:linear-gradient(180deg,#effbf6,#e8f7f1)}
+.ticket.waiting{border-left-color:var(--amber);border-color:#edd49d;background:linear-gradient(180deg,#fff9ed,#fff4df)}
+.ticket.progress{border-left-color:var(--purple);border-color:#d3c8f3;background:linear-gradient(180deg,#f6f3ff,#f0ebff)}
+.ticket.urgent:after{content:"";position:absolute;right:7px;top:7px;width:7px;height:7px;border-radius:50%;background:var(--red);box-shadow:0 0 10px rgba(239,51,75,.75)}
+
+/* SERVICENOW-LIKE LIST */
+.listCard{background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:var(--shadow)}
+.listHeader,.listRow{display:grid;grid-template-columns:105px minmax(220px,1.8fr) 150px 145px 115px 105px;align-items:center;gap:10px}
+.listHeader{padding:10px 13px;background:#f5f8fb;border-bottom:1px solid var(--line);font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:#697d94;font-weight:850}
+.listRow{padding:11px 13px;background:#fff;border:0;border-bottom:1px solid #e9eff5;width:100%;text-align:left;color:var(--ink)}.listRow:hover{background:#f8fbff}
+.subjectLine b{font-size:12px}.subjectLine small{display:block;color:var(--muted);margin-top:2px}
+.statusChip,.priorityChip{display:inline-flex;align-items:center;gap:5px;border-radius:999px;padding:5px 8px;font-size:9px;font-weight:850}.statusChip{background:#edf4fb;color:#1769ab}.statusChip.done{background:#e8f7f0;color:#08744c}.statusChip.wait{background:#fff4df;color:#8c5800}.statusChip.run{background:#f0ebff;color:#5c45ae}.priorityChip{background:#f3f5f8;color:#586b80}.priorityChip.urgent{background:#ffe8eb;color:#bd2135}
+
+/* KPI TABLE */
+.dataCard{background:#fff;border:1px solid var(--line);border-radius:15px;overflow:hidden;box-shadow:var(--shadow)}
+.tbl{width:100%;border-collapse:collapse}.tbl th,.tbl td{padding:12px 13px;border-bottom:1px solid #e7eef5;text-align:left;font-size:11px}.tbl th{background:#f6f9fc;font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#63778e}.tbl tr:hover td{background:#fbfdff}
+.techCards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.techCard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:13px}.techCardTop{display:flex;align-items:center;gap:9px}.techIcon{width:36px;height:36px;border-radius:11px;background:linear-gradient(135deg,#0e518d,#1a88dc);color:#fff;display:grid;place-items:center;font-weight:900}.techCard input{width:100%;margin-top:10px;border:1px solid var(--line);border-radius:10px;padding:10px}
+
+/* TICKET DRAWER */
+.overlay{position:fixed;inset:0;background:rgba(2,11,26,.68);backdrop-filter:blur(4px);z-index:100;display:none;justify-content:flex-end}
+.overlay.open{display:flex}
+.panel{width:min(720px,100%);height:100%;background:#f5f8fc;overflow:auto;box-shadow:-18px 0 55px rgba(0,15,40,.28)}
+.ticketHeader{position:sticky;top:0;z-index:5;background:linear-gradient(110deg,#07162f,#0b3b76);color:#fff;padding:15px 17px;border-bottom:1px solid rgba(85,181,255,.18)}
+.ticketHeaderTop{display:flex;align-items:center;gap:8px}.ticketHeader h2{font-size:18px;margin:9px 0 3px}.ticketHeader .meta{font-size:10px;color:#a7c6e3}.closeX{margin-left:auto;border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.07);color:#fff;border-radius:9px;padding:7px 10px}
+.recordbar{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}.recordPill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.13);border-radius:999px;padding:5px 8px;font-size:9px;color:#d7e9f8}
+.panelBody{padding:15px}
+.recordCard{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:12px;box-shadow:0 6px 20px rgba(8,34,65,.05)}
+.cardTitle{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:#6a7e95;font-weight:900;margin-bottom:10px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:5px}.field.full{grid-column:1/-1}.field label{font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.06em;color:#60758d}.field input,.field select,.field textarea{border:1px solid #d9e5ef;border-radius:10px;padding:10px;background:#fbfdff;color:var(--ink);outline:none}.field input:focus,.field select:focus,.field textarea:focus{border-color:#70b7ed;box-shadow:0 0 0 3px rgba(39,139,218,.09);background:#fff}.field textarea{min-height:92px;resize:vertical}
+.commentComposer{display:grid;grid-template-columns:1fr auto;gap:8px}.commentComposer textarea{min-height:72px}.timeline{position:relative;padding-left:20px}.timeline:before{content:"";position:absolute;left:6px;top:5px;bottom:5px;width:1px;background:#d5e0eb}.comment{position:relative;background:#f8fafc;border:1px solid #e1e9f1;border-radius:11px;padding:9px 10px;margin-bottom:8px}.comment:before{content:"";position:absolute;left:-18px;top:13px;width:9px;height:9px;border-radius:50%;background:#1781d8;border:2px solid #eaf4fc}.comment b{font-size:10px;color:#214664}.comment time{font-size:9px;color:#8797a9;margin-left:6px}.comment p{margin:5px 0 0;font-size:11px;white-space:pre-wrap;line-height:1.45}
+.stickyActions{position:sticky;bottom:0;background:rgba(245,248,252,.94);backdrop-filter:blur(10px);border-top:1px solid var(--line);padding:10px 15px;display:flex;gap:8px;justify-content:flex-end}
+.toast{position:fixed;right:18px;bottom:18px;z-index:130;background:#071a38;color:#fff;border:1px solid #1e5790;padding:10px 13px;border-radius:10px;box-shadow:0 12px 28px rgba(0,16,38,.28);display:none;font-size:11px}.toast.show{display:block}
+
+@media(max-width:980px){
+ .app{display:block}.sidebar{display:none}.workspace{padding:10px}.kpiRow{grid-template-columns:repeat(3,1fr)}
+ .calendarScroller{max-height:none}.topbar{padding:0 10px}.brandBox small,.live{display:none}.globalSearch{display:none}.listHeader{display:none}.listRow{grid-template-columns:1fr 120px}.listRow>*:nth-child(3),.listRow>*:nth-child(4),.listRow>*:nth-child(6){display:none}
+}
+@media(max-width:620px){
+ .kpiRow{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}.field.full{grid-column:auto}.techCards{grid-template-columns:1fr}
+ .topbar{height:auto;min-height:62px}.app{min-height:calc(100vh - 62px)}.topNew{padding:9px 10px;font-size:11px}.brandBox{min-width:0}.brandBox b{font-size:15px}
+ .pageHead{align-items:flex-start;flex-direction:column}.headActions{margin-left:0;width:100%}.headActions .btn,.headActions .select{flex:1}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logoMark"><i></i><i></i><i></i></div>
+  <div class="brandBox"><b>Super Support IT</b><small>Operations Workspace</small></div>
+  <div class="globalSearch"><input id="globalSearch" type="search" placeholder="Rechercher un ticket, un utilisateur, une catégorie…"><span>⌕</span></div>
+  <div class="live"><i></i>Workspace local actif</div>
+  <button class="topNew" id="newTop">＋ Nouveau ticket</button>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <div class="sideSection">Workspace</div>
+    <button class="nav active" data-v="cal"><span class="ico">▦</span><span>Agenda équipe</span><span class="n">SEM</span></button>
+    <button class="nav" data-v="tickets"><span class="ico">◫</span><span>Tickets</span><span class="n" id="navTicketCount">0</span></button>
+    <button class="nav" data-v="kpi"><span class="ico">◩</span><span>KPI & activité</span></button>
+    <button class="nav" data-v="techs"><span class="ico">◎</span><span>Techniciens</span><span class="n">5</span></button>
+    <div class="sideSection">Vues rapides</div>
+    <button class="nav" id="openUrgent"><span class="ico">!</span><span>Urgents</span><span class="n" id="urgentCount">0</span></button>
+    <button class="nav" id="openWaiting"><span class="ico">⌛</span><span>En attente</span><span class="n" id="waitingCount">0</span></button>
+    <button class="nav" id="openToday"><span class="ico">●</span><span>Aujourd'hui</span></button>
+    <div class="teamMini"><b>Équipe support</b><div id="teamPeople" class="teamPeople"></div></div>
+  </aside>
+
+  <main class="workspace">
+    <section id="calV">
+      <div class="pageHead">
+        <div class="pageTitle"><b>Agenda équipe</b><small>Planification hebdomadaire • vue Outlook</small></div>
+        <div class="headActions">
+          <select id="techFilter" class="select"></select>
+          <select id="statusFilter" class="select"><option value="">Tous les statuts</option><option>Planifié</option><option>En cours</option><option>En attente</option><option>Clôturé</option><option>Annulé</option></select>
+        </div>
+      </div>
+      <div id="topKpi" class="kpiRow"></div>
+      <div class="calendarCard">
+        <div class="calendarToolbar">
+          <div class="weekNav"><button class="btn ghost" id="prev">‹</button><button class="btn ghost" id="today">Aujourd'hui</button><button class="btn ghost" id="next">›</button></div>
+          <div class="weekRange" id="weekTitle"></div>
+          <div style="margin-left:auto;color:var(--muted);font-size:10px">Double-clic sur un créneau pour créer un ticket</div>
+        </div>
+        <div class="calendarScroller"><div id="calendar" class="calendar"></div></div>
+      </div>
+    </section>
+
+    <section id="ticketsV" style="display:none">
+      <div class="pageHead">
+        <div class="pageTitle"><b>Tickets</b><small>Vue ITSM inspirée ServiceNow</small></div>
+        <div class="headActions"><select id="listTechFilter" class="select"></select><select id="listStatusFilter" class="select"><option value="">Tous statuts</option><option>Planifié</option><option>En cours</option><option>En attente</option><option>Clôturé</option><option>Annulé</option></select><button id="newList" class="btn primary">＋ Nouveau</button></div>
+      </div>
+      <div class="listCard">
+        <div class="listHeader"><div>Numéro</div><div>Description</div><div>Technicien</div><div>Planification</div><div>Statut</div><div>Priorité</div></div>
+        <div id="ticketList"></div>
+      </div>
+    </section>
+
+    <section id="kpiV" style="display:none">
+      <div class="pageHead"><div class="pageTitle"><b>KPI & activité</b><small>Suivi opérationnel de l'équipe</small></div></div>
+      <div id="kpiCards" class="kpiRow"></div>
+      <div class="dataCard"><table class="tbl"><thead><tr><th>Technicien</th><th>Assignés</th><th>Planifiés</th><th>En cours</th><th>En attente</th><th>Clôturés</th></tr></thead><tbody id="techKpi"></tbody></table></div>
+    </section>
+
+    <section id="techsV" style="display:none">
+      <div class="pageHead"><div class="pageTitle"><b>Techniciens</b><small>Équipe de 5 techniciens</small></div></div>
+      <div id="techEdit" class="techCards"></div>
+    </section>
+  </main>
+</div>
+
+<div id="overlay" class="overlay">
+  <div class="panel">
+    <header class="ticketHeader">
+      <div class="ticketHeaderTop"><span class="recordPill">ITSM RECORD</span><span class="recordPill" id="headerState">NOUVEAU</span><button id="closePanel" class="closeX">Fermer ✕</button></div>
+      <h2 id="pTitle">Nouveau ticket</h2>
+      <div id="pMeta" class="meta"></div>
+      <div class="recordbar"><span class="recordPill" id="recordTech">Non affecté</span><span class="recordPill" id="recordDate">Non planifié</span><span class="recordPill" id="recordPriority">Priorité normale</span></div>
+    </header>
+
+    <div class="panelBody">
+      <form id="form">
+        <input id="id" type="hidden">
+        <section class="recordCard">
+          <div class="cardTitle">Informations du ticket</div>
+          <div class="grid2">
+            <div class="field"><label>N° ticket</label><input id="num" required></div>
+            <div class="field"><label>Technicien</label><select id="tech" required></select></div>
+            <div class="field"><label>Statut</label><select id="status"><option>Planifié</option><option>En cours</option><option>En attente</option><option>Clôturé</option><option>Annulé</option></select></div>
+            <div class="field"><label>Priorité</label><select id="priority"><option>Basse</option><option selected>Normale</option><option>Haute</option><option>Urgente</option></select></div>
+            <div class="field"><label>Catégorie</label><select id="category"><option>Poste Windows</option><option>Microsoft 365</option><option>Réseau</option><option>Matériel</option><option>Applications</option><option>Intune / Entra</option><option>Sécurité</option><option>Impression</option><option>Autre</option></select></div>
+            <div class="field"><label>Utilisateur / client</label><input id="user" placeholder="Nom / référence"></div>
+            <div class="field full"><label>Titre</label><input id="subject" required placeholder="Résumé de l'incident"></div>
+            <div class="field full"><label>Description</label><textarea id="desc" placeholder="Symptômes, contexte, impact…"></textarea></div>
+          </div>
+        </section>
+
+        <section class="recordCard">
+          <div class="cardTitle">Planification</div>
+          <div class="grid2">
+            <div class="field"><label>Date</label><input id="date" type="date" required></div>
+            <div class="field"><label>Début</label><input id="start" type="time" required></div>
+            <div class="field"><label>Fin</label><input id="end" type="time" required></div>
+            <div class="field"><label>Durée</label><input id="durationDisplay" readonly value="1 h"></div>
+          </div>
+        </section>
+
+        <section class="recordCard">
+          <div class="cardTitle">Résolution</div>
+          <div class="field"><label>Commentaire de résolution — obligatoire pour clôturer</label><textarea id="resolution" placeholder="Action réalisée, résultat, validation utilisateur…"></textarea></div>
+        </section>
+      </form>
+
+      <section class="recordCard" id="commentArea">
+        <div class="cardTitle">Journal d'activité</div>
+        <div class="commentComposer"><textarea id="newComment" class="select" placeholder="Ajouter une note de travail / commentaire…"></textarea><button id="addComment" class="btn primary" type="button">Ajouter</button></div>
+        <div id="comments" class="timeline" style="margin-top:12px"></div>
+      </section>
+    </div>
+
+    <div class="stickyActions">
+      <button class="btn danger" type="button" id="deleteTicket">Supprimer</button>
+      <button class="btn success" type="button" id="closeTicket">Clôturer</button>
+      <button class="btn primary" type="submit" form="form">Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+const KEY="ssit_planning_v01";
+let db=load(),week=startWeek(new Date()),activeQuick=null;
+
+function seed(){
+ let m=startWeek(new Date()),d=n=>iso(add(m,n));
+ return [
+ {id:"1",number:"INC-00101",techId:"t1",date:d(0),start:"09:00",end:"10:00",status:"Planifié",priority:"Normale",category:"Microsoft 365",subject:"Outlook - erreur de démarrage",user:"Utilisateur A",description:"Outlook se ferme après ouverture.",resolution:"",comments:[{at:new Date().toISOString(),author:"Tech 1",text:"Ticket planifié pour diagnostic."}]},
+ {id:"2",number:"INC-00102",techId:"t2",date:d(0),start:"10:00",end:"11:30",status:"En cours",priority:"Haute",category:"Réseau",subject:"VPN indisponible",user:"Utilisateur B",description:"Connexion VPN impossible.",resolution:"",comments:[{at:new Date().toISOString(),author:"Tech 2",text:"Prise en charge. Test réseau demandé."}]},
+ {id:"3",number:"INC-00103",techId:"t3",date:d(1),start:"14:00",end:"15:00",status:"En attente",priority:"Normale",category:"Matériel",subject:"Dock non détecté",user:"Utilisateur C",description:"Écran externe non détecté.",resolution:"",comments:[{at:new Date().toISOString(),author:"Tech 3",text:"En attente d'un test avec un autre câble."}]},
+ {id:"4",number:"INC-00104",techId:"t4",date:d(2),start:"11:00",end:"12:00",status:"Planifié",priority:"Normale",category:"Applications",subject:"Installation application",user:"Utilisateur D",description:"Installation sur nouveau poste.",resolution:"",comments:[]},
+ {id:"5",number:"INC-00105",techId:"t5",date:d(3),start:"15:00",end:"16:30",status:"Planifié",priority:"Urgente",category:"Poste Windows",subject:"BitLocker au démarrage",user:"Utilisateur E",description:"Demande de récupération au démarrage.",resolution:"",comments:[]}
+ ]}
+
+function load(){try{let d=JSON.parse(localStorage.getItem(KEY));if(d&&d.techs&&d.tickets)return d}catch(e){}return{techs:[1,2,3,4,5].map(i=>({id:"t"+i,name:"Tech "+i})),tickets:seed(),seq:6}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function startWeek(d){let x=new Date(d.getFullYear(),d.getMonth(),d.getDate()),n=(x.getDay()+6)%7;x.setDate(x.getDate()-n);return x}
+function add(d,n){let x=new Date(d);x.setDate(x.getDate()+n);return x}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function techName(id){let t=db.techs.find(x=>x.id===id);return t?t.name:"Non affecté"}
+function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function msg(s){let t=document.getElementById("toast");t.textContent=s;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1800)}
+function initials(n){return (n||"T").split(/\s+/).map(x=>x[0]).join("").slice(0,2).toUpperCase()}
+function minutes(v){let [h,m]=v.split(":").map(Number);return h*60+m}
+function durationText(a,b){let d=Math.max(0,minutes(b)-minutes(a));return d>=60?`${Math.floor(d/60)} h${d%60?` ${d%60} min`:""}`:`${d} min`}
+function statusClass(s){return s==="Clôturé"?"done":s==="En attente"?"wait":s==="En cours"?"run":""}
+
+function populate(){
+ let opt='<option value="">Tous les techniciens</option>'+db.techs.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
+ techFilter.innerHTML=opt;listTechFilter.innerHTML=opt;tech.innerHTML=db.techs.map(t=>`<option value="${t.id}">${esc(t.name)}</option>`).join("");
+ teamPeople.innerHTML=db.techs.map(t=>`<div class="avatar" title="${esc(t.name)}">${esc(initials(t.name))}</div>`).join("");
+ navTicketCount.textContent=db.tickets.length;
+ urgentCount.textContent=db.tickets.filter(t=>t.priority==="Urgente"&&!["Clôturé","Annulé"].includes(t.status)).length;
+ waitingCount.textContent=db.tickets.filter(t=>t.status==="En attente").length;
+}
+
+function filteredCalendar(){
+ let a=techFilter.value,b=statusFilter.value;
+ return db.tickets.filter(t=>(!a||t.techId===a)&&(!b||t.status===b));
+}
+
+function renderCal(){
+ const todayIso=iso(new Date());
+ weekTitle.innerHTML=`${week.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})} → ${add(week,6).toLocaleDateString("fr-FR",{day:"numeric",month:"long",year:"numeric"})}<small>${filteredCalendar().length} intervention(s) visible(s)</small>`;
+ let days=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"],h='<div class="calHead"><div class="corner">GMT+2</div>';
+ for(let i=0;i<7;i++){let d=add(week,i),today=iso(d)===todayIso?" today":"";h+=`<div class="dayHead${today}"><b>${days[i]}</b><strong>${d.getDate()}</strong></div>`}
+ h+="</div>";
+ let ts=filteredCalendar();
+ for(let hr=7;hr<=19;hr++){
+   h+=`<div class="calRow"><div class="hour">${String(hr).padStart(2,"0")}:00</div>`;
+   for(let i=0;i<7;i++){
+     let day=iso(add(week,i)),today=day===todayIso?" today":"";
+     h+=`<div class="slot${today}" data-date="${day}" data-hour="${String(hr).padStart(2,"0")}:00">`;
+     ts.filter(t=>t.date===day&&+t.start.slice(0,2)===hr).forEach(t=>{
+       let c=t.status==="Clôturé"?"closed":t.status==="En attente"?"waiting":t.status==="En cours"?"progress":"",u=t.priority==="Urgente"?"urgent":"";
+       h+=`<button class="ticket ${c} ${u}" data-id="${t.id}">
+         <div class="tTop"><span>${esc(t.start)}–${esc(t.end)}</span><span>•</span><span>${esc(t.number)}</span></div>
+         <div class="tSubject">${esc(t.subject)}</div>
+         <small><span>${esc(techName(t.techId))}</span><span>${esc(t.status)}</span></small>
+       </button>`
+     });
+     h+="</div>";
+   }
+   h+="</div>";
+ }
+ calendar.innerHTML=h;
+ document.querySelectorAll(".ticket").forEach(b=>b.onclick=()=>openTicket(b.dataset.id));
+ document.querySelectorAll(".slot").forEach(s=>s.ondblclick=()=>openNew(s.dataset.date,s.dataset.hour));
+ renderTop();
+}
+
+function renderTop(){
+ let t=filteredCalendar(),a=[
+  ["Tickets",t.length,""],["Planifiés",t.filter(x=>x.status==="Planifié").length,""],["En cours",t.filter(x=>x.status==="En cours").length,"purple"],
+  ["En attente",t.filter(x=>x.status==="En attente").length,"amber"],["Clôturés",t.filter(x=>x.status==="Clôturé").length,"green"],["Urgents",t.filter(x=>x.priority==="Urgente"&&x.status!=="Clôturé").length,"red"]
+ ];
+ topKpi.innerHTML=a.map(x=>`<div class="kpi" data-tone="${x[2]}"><b>${x[1]}</b><span>${x[0]}</span></div>`).join("");
+}
+
+function currentList(){
+ let q=globalSearch.value.trim().toLowerCase(),tf=listTechFilter.value,sf=listStatusFilter.value;
+ return db.tickets.filter(t=>{
+   if(tf&&t.techId!==tf)return false;if(sf&&t.status!==sf)return false;
+   if(activeQuick==="urgent"&&!(t.priority==="Urgente"&&!["Clôturé","Annulé"].includes(t.status)))return false;
+   if(activeQuick==="waiting"&&t.status!=="En attente")return false;
+   if(activeQuick==="today"&&t.date!==iso(new Date()))return false;
+   if(q&&!`${t.number} ${t.subject} ${t.user} ${t.category} ${techName(t.techId)} ${t.status}`.toLowerCase().includes(q))return false;
+   return true;
+ });
+}
+
+function renderList(){
+ let rows=[...currentList()].sort((a,b)=>(b.date+b.start).localeCompare(a.date+a.start));
+ ticketList.innerHTML=rows.length?rows.map(t=>`<button class="listRow" data-id="${t.id}">
+   <div><b style="color:#1769ab">${esc(t.number)}</b></div>
+   <div class="subjectLine"><b>${esc(t.subject)}</b><small>${esc(t.user||"Sans utilisateur")} • ${esc(t.category)}</small></div>
+   <div>${esc(techName(t.techId))}</div>
+   <div><b>${esc(t.date)}</b><br><small>${esc(t.start)} → ${esc(t.end)}</small></div>
+   <div><span class="statusChip ${statusClass(t.status)}">${esc(t.status)}</span></div>
+   <div><span class="priorityChip ${t.priority==="Urgente"?"urgent":""}">${esc(t.priority)}</span></div>
+ </button>`).join(""):`<div style="padding:28px;text-align:center;color:var(--muted)">Aucun ticket dans cette vue.</div>`;
+ document.querySelectorAll(".listRow").forEach(b=>b.onclick=()=>openTicket(b.dataset.id));
+}
+
+function renderKpi(){
+ let a=db.tickets,vals=[
+  ["Total tickets",a.length,""],["Ouverts",a.filter(t=>!["Clôturé","Annulé"].includes(t.status)).length,""],
+  ["En attente",a.filter(t=>t.status==="En attente").length,"amber"],["Clôturés",a.filter(t=>t.status==="Clôturé").length,"green"],
+  ["Urgents",a.filter(t=>t.priority==="Urgente"&&t.status!=="Clôturé").length,"red"],["Avec suivi",a.filter(t=>(t.comments||[]).length).length,"purple"]
+ ];
+ kpiCards.innerHTML=vals.map(x=>`<div class="kpi" data-tone="${x[2]}"><b>${x[1]}</b><span>${x[0]}</span></div>`).join("");
+ techKpi.innerHTML=db.techs.map(z=>{let x=a.filter(t=>t.techId===z.id);return `<tr><td><b>${esc(z.name)}</b></td><td>${x.length}</td><td>${x.filter(t=>t.status==="Planifié").length}</td><td>${x.filter(t=>t.status==="En cours").length}</td><td>${x.filter(t=>t.status==="En attente").length}</td><td>${x.filter(t=>t.status==="Clôturé").length}</td></tr>`}).join("");
+}
+
+function renderTechs(){
+ techEdit.innerHTML=db.techs.map((t,i)=>`<div class="techCard"><div class="techCardTop"><div class="techIcon">${esc(initials(t.name))}</div><div><b>Technicien ${i+1}</b><div style="font-size:10px;color:var(--muted)">Agenda & tickets</div></div></div><input data-tech="${t.id}" value="${esc(t.name)}"></div>`).join("")+'<div style="grid-column:1/-1"><button id="saveTechs" class="btn primary">Enregistrer les noms</button></div>';
+ saveTechs.onclick=()=>{document.querySelectorAll("[data-tech]").forEach(i=>{let t=db.techs.find(x=>x.id===i.dataset.tech);if(t)t.name=i.value.trim()||t.name});save();populate();renderAll();msg("Techniciens enregistrés")};
+}
+
+function syncHeader(){
+ let t=db.tickets.find(x=>x.id===id.value);
+ headerState.textContent=t?t.status.toUpperCase():"NOUVEAU";
+ recordTech.textContent=techName(tech.value);
+ recordDate.textContent=(date.value||"Non planifié")+(start.value?` • ${start.value}`:"");
+ recordPriority.textContent="Priorité "+(priority.value||"Normale").toLowerCase();
+ durationDisplay.value=start.value&&end.value?durationText(start.value,end.value):"—";
+}
+
+function openNew(dt=iso(new Date()),st="09:00"){
+ form.reset();id.value="";num.value="INC-"+String(100+db.seq).padStart(5,"0");date.value=dt;start.value=st;end.value=String(Math.min(+st.slice(0,2)+1,23)).padStart(2,"0")+":"+st.slice(3);
+ tech.value=db.techs[0].id;status.value="Planifié";priority.value="Normale";pTitle.textContent="Nouveau ticket";pMeta.textContent="Nouvel enregistrement ITSM • intervention à planifier";
+ commentArea.style.display="none";deleteTicket.style.display="none";closeTicket.style.display="none";syncHeader();overlay.classList.add("open");
+}
+
+function openTicket(i){
+ let t=db.tickets.find(x=>x.id===i);if(!t)return;
+ id.value=t.id;num.value=t.number;tech.value=t.techId;date.value=t.date;start.value=t.start;end.value=t.end;status.value=t.status;priority.value=t.priority;category.value=t.category;subject.value=t.subject;user.value=t.user||"";desc.value=t.description||"";resolution.value=t.resolution||"";
+ pTitle.textContent=t.number+" — "+t.subject;pMeta.textContent=`${t.category} • ${t.user||"Sans utilisateur"} • mis à jour localement`;
+ commentArea.style.display="block";deleteTicket.style.display="";closeTicket.style.display="";renderComments(t);syncHeader();overlay.classList.add("open");
+}
+
+function renderComments(t){
+ comments.innerHTML=(t.comments||[]).length?[...t.comments].reverse().map(c=>`<div class="comment"><b>${esc(c.author)}</b><time>${new Date(c.at).toLocaleString("fr-FR")}</time><p>${esc(c.text)}</p></div>`).join(""):'<div style="color:var(--muted);font-size:11px;padding:8px">Aucune activité enregistrée.</div>';
+}
+
+function renderAll(){populate();renderCal();renderList();renderKpi();renderTechs()}
+
+form.onsubmit=e=>{
+ e.preventDefault();
+ let i=id.value,d={number:num.value.trim(),techId:tech.value,date:date.value,start:start.value,end:end.value,status:status.value,priority:priority.value,category:category.value,subject:subject.value.trim(),user:user.value.trim(),description:desc.value.trim(),resolution:resolution.value.trim()};
+ if(d.status==="Clôturé"&&!d.resolution){msg("Commentaire de résolution obligatoire pour clôturer.");return}
+ if(minutes(d.end)<=minutes(d.start)){msg("L'heure de fin doit être après l'heure de début.");return}
+ if(i){Object.assign(db.tickets.find(x=>x.id===i),d)}else{db.seq++;db.tickets.push({id:String(Date.now()),comments:[],...d})}
+ save();renderAll();overlay.classList.remove("open");msg("Ticket enregistré");
+};
+
+addComment.onclick=()=>{
+ let t=db.tickets.find(x=>x.id===id.value),v=newComment.value.trim();if(!t||!v)return;
+ t.comments=t.comments||[];t.comments.push({at:new Date().toISOString(),author:techName(t.techId),text:v});newComment.value="";save();renderComments(t);renderAll();msg("Commentaire ajouté");
+};
+
+closeTicket.onclick=()=>{
+ let t=db.tickets.find(x=>x.id===id.value),r=resolution.value.trim();if(!t)return;
+ if(!r){msg("Ajoute un commentaire de résolution avant clôture.");return}
+ t.resolution=r;t.status="Clôturé";t.closedAt=new Date().toISOString();t.comments=t.comments||[];t.comments.push({at:t.closedAt,author:techName(t.techId),text:"Clôture : "+r});
+ save();renderAll();openTicket(t.id);msg("Ticket clôturé");
+};
+
+deleteTicket.onclick=()=>{if(!id.value)return;if(confirm("Supprimer définitivement ce ticket ?")){db.tickets=db.tickets.filter(t=>t.id!==id.value);save();renderAll();overlay.classList.remove("open");msg("Ticket supprimé")}};
+closePanel.onclick=()=>overlay.classList.remove("open");overlay.onclick=e=>{if(e.target===overlay)overlay.classList.remove("open")};
+newTop.onclick=newList.onclick=()=>openNew();
+prev.onclick=()=>{week=add(week,-7);renderCal()};next.onclick=()=>{week=add(week,7);renderCal()};today.onclick=()=>{week=startWeek(new Date());renderCal()};
+techFilter.onchange=statusFilter.onchange=renderCal;listTechFilter.onchange=listStatusFilter.onchange=renderList;
+globalSearch.oninput=()=>{if(globalSearch.value.trim()){showView("tickets")}renderList()};
+[start,end,date,tech,status,priority].forEach(x=>x.addEventListener("change",syncHeader));
+
+function showView(v){
+ document.querySelectorAll(".nav[data-v]").forEach(x=>x.classList.toggle("active",x.dataset.v===v));
+ ["cal","tickets","kpi","techs"].forEach(x=>document.getElementById(x+"V").style.display=x===v?"":"none");
+ if(v==="tickets")renderList();if(v==="kpi")renderKpi();if(v==="techs")renderTechs();
+}
+document.querySelectorAll(".nav[data-v]").forEach(b=>b.onclick=()=>{activeQuick=null;showView(b.dataset.v)});
+openUrgent.onclick=()=>{activeQuick="urgent";listStatusFilter.value="";showView("tickets");renderList()};
+openWaiting.onclick=()=>{activeQuick="waiting";listStatusFilter.value="En attente";showView("tickets");renderList()};
+openToday.onclick=()=>{activeQuick="today";showView("tickets");renderList()};
+
+populate();renderAll();
+</script>
+</body>
+</html>
