@@ -1,6 +1,6 @@
 import { FormEvent,useEffect,useMemo,useState } from 'react'
 import { useQuery,useQueryClient } from '@tanstack/react-query'
-import { CheckCircle2,Download,History,Mail,MessageSquarePlus,Package,Plus,RotateCcw,Save,Search,Trash2,UserPlus } from 'lucide-react'
+import { CheckCircle2,Download,History,Mail,MessageSquarePlus,MessageSquareText,Package,Plus,RotateCcw,Save,Search,Trash2,UserPlus } from 'lucide-react'
 import * as XLSX from 'xlsx'
 import { supabase } from '../lib/supabase'
 import { notify } from '../lib/notify'
@@ -9,7 +9,10 @@ import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
 import { buildTicketNotification,type TicketNotificationType } from '../lib/ticketNotification'
 import { DetailDrawer } from '../components/DetailDrawer'
 import { TicketNotificationDialog,type PendingTicketNotification } from '../components/TicketNotificationDialog'
-import type { Customer,CustomerContact,Profile,Ticket } from '../lib/types'
+import { TicketCommunicationPicker } from '../components/TicketCommunicationPicker'
+import { TicketClosureDialog } from '../components/TicketClosureDialog'
+import { applyTicketContext,mailtoForTemplate } from '../lib/ticketCommunication'
+import type { CommunicationTemplate,Customer,CustomerContact,Profile,Ticket } from '../lib/types'
 
 type DateField='created_at'|'arrival_at'|'planned_start'|'closed_at'
 const emptyTicket=():Partial<Ticket>=>({subject:'',requester:'',description:'',category:'',intervention_type:'',status:'',priority:'',assigned_to:null,arrival_at:new Date().toISOString(),planned_start:null,planned_end:null,is_blocking:false,parent_incident:null,general_incident_label:null,customer_id:null,customer_contact_id:null})
@@ -36,6 +39,10 @@ export function TicketsPage(){
  const [pendingNotification,setPendingNotification]=useState<PendingTicketNotification|null>(null)
  const [commentText,setCommentText]=useState('')
  const [commentBusy,setCommentBusy]=useState(false)
+ const [communicationTarget,setCommunicationTarget]=useState<'comment'|'closure'|null>(null)
+ const [closureOpen,setClosureOpen]=useState(false)
+ const [closureText,setClosureText]=useState('')
+ const [closureBusy,setClosureBusy]=useState(false)
 
  const {data:tickets=[]}=useQuery({queryKey:['tickets'],queryFn:async()=>{const {data,error}=await supabase.from('tickets').select('*').order('arrival_at',{ascending:false});if(error)throw error;return data as Ticket[]}})
  const {data:profiles=[]}=useQuery({queryKey:['profiles','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('profiles').select('*').order('display_name');if(error)throw error;return data as Profile[]}})
@@ -43,6 +50,7 @@ export function TicketsPage(){
  const {data:customers=[]}=useQuery({queryKey:['customers','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('customers').select('*').order('name');if(error)throw error;return data as Customer[]}})
  const {data:customerContacts=[]}=useQuery({queryKey:['customer-contacts','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('customer_contacts').select('*').eq('active',true).order('last_name');if(error)throw error;return data as CustomerContact[]}})
  const {data:distribution=[]}=useQuery({queryKey:['notification-distribution'],queryFn:async()=>{const {data,error}=await supabase.from('notification_distribution_recipients').select('*').eq('active',true).order('sort_order');if(error)throw error;return data||[]}})
+ const {data:communicationTemplates=[]}=useQuery({queryKey:['communication_templates','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('communication_templates').select('*').eq('channel','Outlook').eq('active',true).order('theme').order('sort_order').order('title');if(error)throw error;return data as CommunicationTemplate[]}})
 
  const {data:comments=[]}=useQuery({queryKey:['comments',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_comments').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
  const {data:history=[]}=useQuery({queryKey:['ticket-history-detail',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_history').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
@@ -88,8 +96,8 @@ export function TicketsPage(){
  useEffect(()=>{if(selected&&!selected.id){setSelected(s=>({...s,status:s?.status||defaultLabel('status','new'),priority:s?.priority||defaultLabel('priority','normal'),category:s?.category||cfg('category')[0]?.label||'',intervention_type:s?.intervention_type||cfg('type')[0]?.label||''}))}},[config])
  useEffect(()=>{if(selected?.id)setRecipientEmails(ticketRecipients.map((x:any)=>String(x.email).toLowerCase()))},[selected?.id,ticketRecipients])
 
- const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('');setCommentText('')}
- const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('');setCommentText('')}
+ const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null)}
+ const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null)}
  const clearFilters=()=>{setSearch('');setFrom('');setTo('');setTechnician('');setRequester('');setCustomer('');setStatusFilter('');setPriorityFilter('');setDateField('created_at')}
 
  const addRecipient=(emailRaw?:string)=>{
@@ -172,18 +180,69 @@ export function TicketsPage(){
   }finally{setCommentBusy(false)}
  }
 
+ const openClosure=()=>{setClosureText(selected?.resolution_comment||'');setClosureOpen(true)}
  const close=async()=>{
   if(!selected?.id)return
-  const resolution=prompt('Commentaire de résolution obligatoire')
-  if(!resolution?.trim())return
-  const {error}=await supabase.rpc('close_ticket',{p_ticket_id:selected.id,p_resolution:resolution.trim()})
-  if(error){notify(error.message,'error');return}
-  const {data,error:fetchError}=await supabase.from('tickets').select('*').eq('id',selected.id).single()
-  if(fetchError){notify('Ticket clôturé, mais relecture impossible : '+fetchError.message,'error');return}
-  const saved=data as Ticket
-  setSelected(saved);notify('Ticket clôturé.')
-  await qc.invalidateQueries({queryKey:['tickets']})
-  await prepareNotification(saved,'close')
+  const resolution=closureText.trim()
+  if(!resolution){notify('Le commentaire de résolution est obligatoire.','error');return}
+  try{
+   setClosureBusy(true)
+   const {error}=await supabase.rpc('close_ticket',{p_ticket_id:selected.id,p_resolution:resolution})
+   if(error){notify(error.message,'error');return}
+   const {data,error:fetchError}=await supabase.from('tickets').select('*').eq('id',selected.id).single()
+   if(fetchError){notify('Ticket clôturé, mais relecture impossible : '+fetchError.message,'error');return}
+   const saved=data as Ticket
+   setSelected(saved);setClosureOpen(false);notify('Ticket clôturé.')
+   await qc.invalidateQueries({queryKey:['tickets']})
+   await prepareNotification(saved,'close')
+  }finally{setClosureBusy(false)}
+ }
+
+ const ticketRecipientList=()=>[...new Set([
+  ...distribution.map((x:any)=>String(x.email).trim().toLowerCase()),
+  ...recipientEmails
+ ].filter(Boolean))]
+
+ const logCommunicationUse=async(template:CommunicationTemplate,usage:string,details:Record<string,unknown>={})=>{
+  if(!selected?.id)return
+  const {error}=await supabase.rpc('log_ticket_communication_usage',{p_ticket_id:selected.id,p_template_id:template.id,p_usage:usage,p_details:details})
+  if(error)notify('Traçabilité communication incomplète : '+error.message,'error')
+ }
+
+ const communicationContent=(template:CommunicationTemplate)=>{
+  if(!selected?.id)return {subject:template.subject||'',body:template.body}
+  return applyTicketContext(template,{
+   ticket:selected as Ticket,
+   clientName:clientName(selected.customer_id),
+   technicianName:techName(selected.assigned_to)
+  })
+ }
+
+ const insertCommunication=async(template:CommunicationTemplate)=>{
+  const prepared=communicationContent(template)
+  if(communicationTarget==='comment'){
+   setCommentText(prev=>[prev.trim(),prepared.body.trim()].filter(Boolean).join('\n\n'))
+   await logCommunicationUse(template,'insert_comment',{target:'comment'})
+   notify('Modèle inséré dans le commentaire.')
+  }else if(communicationTarget==='closure'){
+   setClosureText(prev=>[prev.trim(),prepared.body.trim()].filter(Boolean).join('\n\n'))
+   await logCommunicationUse(template,'insert_closure',{target:'closure'})
+   notify('Modèle inséré dans la résolution.')
+  }
+  setCommunicationTarget(null)
+ }
+
+ const copyCommunication=async(template:CommunicationTemplate)=>{
+  const prepared=communicationContent(template)
+  await navigator.clipboard.writeText([prepared.subject?('Objet : '+prepared.subject):'',prepared.body].filter(Boolean).join('\n\n'))
+  await logCommunicationUse(template,'copy',{target:communicationTarget})
+  notify('Communication copiée.')
+ }
+
+ const mailCommunication=async(template:CommunicationTemplate)=>{
+  const prepared=communicationContent(template)
+  await logCommunicationUse(template,'open_mail',{target:communicationTarget,recipients:ticketRecipientList()})
+  window.location.href=mailtoForTemplate(ticketRecipientList(),prepared.subject,prepared.body)
  }
 
  const reopen=async()=>{
@@ -307,13 +366,13 @@ export function TicketsPage(){
    </form>
 
    {selected.id&&<>
-    <div className="actions ticket-detail-actions"><button className="primary" onClick={()=>void close()} disabled={!!selected.closed_at}><CheckCircle2 size={15}/> Clôturer</button>{selected.closed_at&&<button className="ghost" onClick={()=>void reopen()}><RotateCcw size={15}/> Rouvrir</button>}</div>
+    <div className="actions ticket-detail-actions"><button className="primary" onClick={openClosure} disabled={!!selected.closed_at}><CheckCircle2 size={15}/> Clôturer</button>{selected.closed_at&&<button className="ghost" onClick={()=>void reopen()}><RotateCcw size={15}/> Rouvrir</button>}</div>
     {selected.resolution_comment&&<div className="detail-description"><b>Résolution :</b> {selected.resolution_comment}</div>}
 
     <section className="ticket-comment-composer">
      <div className="ticket-comment-composer-head"><div><MessageSquarePlus size={16}/><b>Ajouter un commentaire</b></div><span>{commentText.length} caractère{commentText.length>1?'s':''}</span></div>
      <textarea value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Saisis ici le compte rendu, les actions réalisées, le constat ou les informations à transmettre…" rows={7}/>
-     <button className="secondary ticket-comment-submit" onClick={()=>void addComment()} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Ajouter le commentaire'}</button>
+     <div className="ticket-comment-actions"><button className="ghost" onClick={()=>setCommunicationTarget('comment')}><MessageSquareText size={15}/> Communication</button><button className="secondary ticket-comment-submit" onClick={()=>void addComment()} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Ajouter le commentaire'}</button></div>
     </section>
 
     <h3 className="section-title"><Mail size={15}/> Notifications Outlook ({ticketNotifications.length})</h3>
@@ -330,6 +389,8 @@ export function TicketsPage(){
    </>}
   </DetailDrawer>}
 
+  {closureOpen&&selected?.id&&<TicketClosureDialog ticketNumber={selected.ticket_number||'Ticket'} value={closureText} onChange={setClosureText} onCommunication={()=>setCommunicationTarget('closure')} onClose={()=>setClosureOpen(false)} onSubmit={close} busy={closureBusy}/>}
+  {communicationTarget&&selected?.id&&<TicketCommunicationPicker templates={communicationTemplates} target={communicationTarget} onClose={()=>setCommunicationTarget(null)} onInsert={template=>void insertCommunication(template)} onCopy={template=>void copyCommunication(template)} onMail={template=>void mailCommunication(template)}/>}
   {pendingNotification&&<TicketNotificationDialog notification={pendingNotification} onOpenOutlook={markOutlookOpened} onConfirm={confirmNotification}/>}
  </div>
 }
