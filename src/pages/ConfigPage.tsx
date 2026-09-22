@@ -1,0 +1,15 @@
+import { FormEvent,useState } from 'react'
+import { useQuery,useQueryClient } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
+
+const kinds=[['status','Statuts'],['priority','Priorités'],['category','Catégories'],['type','Types']]
+export function ConfigPage(){
+ const qc=useQueryClient();const [kind,setKind]=useState('status')
+ const {data=[]}=useQuery({queryKey:['config'],queryFn:async()=>{const {data,error}=await supabase.from('config_values').select('*').order('sort_order');if(error)throw error;return data||[]}})
+ const rows=data.filter((x:any)=>x.kind===kind)
+ const add=async(e:FormEvent<HTMLFormElement>)=>{e.preventDefault();const fd=new FormData(e.currentTarget);const {error}=await supabase.from('config_values').insert({kind,code:String(fd.get('code')).trim(),label:String(fd.get('label')).trim(),sort_order:rows.length*10,active:true});if(error)alert(error.message);else{e.currentTarget.reset();await qc.invalidateQueries({queryKey:['config']})}}
+ const edit=async(x:any)=>{const label=prompt('Libellé',x.label);if(!label)return;const {error}=await supabase.from('config_values').update({label}).eq('id',x.id);if(error)alert(error.message);else await qc.invalidateQueries({queryKey:['config']})}
+ const toggle=async(x:any)=>{await supabase.from('config_values').update({active:!x.active}).eq('id',x.id);await qc.invalidateQueries({queryKey:['config']})}
+ return <div className="page"><header className="page-head"><div><h1>Configuration</h1><p>Codes stables et libellés modifiables.</p></div></header><div className="grid two"><section className="card"><div className="actions">{kinds.map(k=><button key={k[0]} className={kind===k[0]?'primary':'ghost'} onClick={()=>setKind(k[0])}>{k[1]}</button>)}</div><div className="table-wrap"><table><thead><tr><th>Code</th><th>Libellé</th><th>Actif</th><th></th></tr></thead><tbody>{rows.map((x:any)=><tr key={x.id}><td><code>{x.code}</code></td><td>{x.label}</td><td><span className={'badge '+(x.active?'green':'red')}>{x.active?'Oui':'Non'}</span></td><td><div className="actions"><button className="ghost small" onClick={()=>void edit(x)}>Modifier</button><button className="ghost small" onClick={()=>void toggle(x)}>{x.active?'Désactiver':'Activer'}</button></div></td></tr>)}</tbody></table></div></section>
+ <section className="card"><h3>Ajouter</h3><form className="form-grid" onSubmit={add}><label>Code stable<input name="code" required placeholder="ex: network"/></label><label>Libellé<input name="label" required placeholder="ex: Réseau"/></label><button className="primary full">Ajouter</button></form><p className="muted">Le code ne doit pas changer après utilisation. Le libellé peut évoluer sans casser les règles métier.</p></section></div></div>
+}
