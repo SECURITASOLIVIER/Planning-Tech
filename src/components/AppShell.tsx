@@ -1,5 +1,5 @@
 import { NavLink,Outlet } from 'react-router-dom'
-import { Activity,Boxes,CalendarDays,ClipboardList,FileClock,Gauge,LogOut,Settings,Users,Building2 } from 'lucide-react'
+import { Activity,Boxes,CalendarDays,ClipboardList,FileClock,Gauge,LogOut,Settings,Users,Building2,MessageSquareText } from 'lucide-react'
 import { useAuth } from '../auth/AuthProvider'
 
 const item=(to:string,label:string,Icon:React.ComponentType<{size?:number}>)=>({to,label,Icon})
@@ -11,6 +11,7 @@ export function AppShell(){
   item('/','Dashboard',Gauge),
   item('/planning','Planning',CalendarDays),
   item('/tickets','Tickets',ClipboardList),
+  item('/communications','Communications',MessageSquareText),
   ...(manager?[
    item('/clients','Clients',Building2),
    item('/users','Utilisateurs',Users),
