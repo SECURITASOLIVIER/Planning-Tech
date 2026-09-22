@@ -1,6 +1,6 @@
 import { CheckCircle2,Mail,Send,XCircle } from 'lucide-react'
 import { useState } from 'react'
-import { outlookComposeUrl, type TicketNotificationType } from '../lib/ticketNotification'
+import { mailtoComposeUrl, type TicketNotificationType } from '../lib/ticketNotification'
 
 export interface PendingTicketNotification{
  notificationId:number
@@ -17,10 +17,10 @@ export function TicketNotificationDialog({
 }:{notification:PendingTicketNotification;onOpenOutlook:()=>Promise<void>;onConfirm:(confirmed:boolean)=>Promise<void>}){
  const [busy,setBusy]=useState(false)
 
- const openOutlook=async()=>{
-  const url=outlookComposeUrl(notification.recipients,notification.subject,notification.body)
-  window.open(url,'_blank','noopener,noreferrer')
-  try{await onOpenOutlook()}catch{}
+ const openOutlook=()=>{
+  const url=mailtoComposeUrl(notification.recipients,notification.subject,notification.body)
+  void onOpenOutlook().catch(()=>{})
+  window.location.href=url
  }
 
  const finish=async(confirmed:boolean)=>{
@@ -33,9 +33,9 @@ export function TicketNotificationDialog({
    <header className="notification-dialog-head"><Mail size={21}/><div><small>Notification ticket</small><h2>{notification.ticketNumber}</h2></div></header>
    <p className="notification-question">Avez-vous envoyé la notification à tous les destinataires ?</p>
    <div className="notification-recipients"><span>Destinataires</span>{notification.recipients.length?notification.recipients.map(x=><b key={x}>{x}</b>):<b className="warning-text">Aucun destinataire configuré</b>}</div>
-   <div className="notification-preview"><span>Objet Outlook</span><b>{notification.subject}</b><pre>{notification.body}</pre></div>
+   <div className="notification-preview"><span>Objet e-mail</span><b>{notification.subject}</b><pre>{notification.body}</pre></div>
    <div className="notification-actions">
-    <button className="secondary" onClick={()=>void openOutlook()} disabled={!notification.recipients.length||busy}><Send size={15}/> Ouvrir Outlook</button>
+    <button className="secondary" onClick={openOutlook} disabled={!notification.recipients.length||busy}><Send size={15}/> Ouvrir l’app mail</button>
     <button className="primary" onClick={()=>void finish(true)} disabled={busy||!notification.recipients.length}><CheckCircle2 size={15}/> Oui, envoyé à tous</button>
     <button className="ghost" onClick={()=>void finish(false)} disabled={busy}><XCircle size={15}/> Pas encore envoyé</button>
    </div>
