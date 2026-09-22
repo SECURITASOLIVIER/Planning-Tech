@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06152f">
+<title>Super Support IT • Planning ITSM</title>
+<link rel="stylesheet" href="./app.css?v=20260922-1905">
+</head>
+<body>
+
+<section id="authScreen" class="authWrap">
+  <div class="authCard" style="width:min(980px,100%)">
+    <div class="brandLine">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div><h1>Super Support IT</h1><p>Choisis ton type d’accès.</p></div>
+    </div>
+
+    <div class="accessGrid" style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+      <div class="accessCard" style="border:1px solid #dce6f1;border-radius:16px;padding:16px;background:#f8fbff">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0b3b76;color:white;font-size:20px">M</div>
+          <div><b style="font-size:18px">Accès Manager</b><div class="muted" style="font-size:11px">Tous les tickets, utilisateurs, KPI, configuration et export Excel</div></div>
+        </div>
+        <form id="managerLoginForm" novalidate>
+          <div class="field"><label>Email Manager</label><input id="managerEmail" class="input" type="email" value="olivier.marchegay@securitas.fr" required autocomplete="username"></div>
+          <div class="field"><label>Mot de passe</label><input id="managerPassword" class="input" type="password" autocomplete="current-password" placeholder="Saisis ton mot de passe"><div id="managerPasswordError" class="muted" style="display:none;color:#b42318;font-weight:800;margin-top:6px">Mot de passe requis.</div></div>
+          <button id="managerLoginBtn" class="btn primary" type="submit" style="width:100%">Entrer en Manager</button>
+        </form>
+      </div>
+
+      <div class="accessCard" style="border:1px solid #dce6f1;border-radius:16px;padding:16px;background:#fbfdff">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <div style="width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#1677d2;color:white;font-size:20px">T</div>
+          <div><b style="font-size:18px">Accès Technicien</b><div class="muted" style="font-size:11px">Uniquement le planning et les tickets qui te sont assignés</div></div>
+        </div>
+        <form id="techLoginForm">
+          <div class="field"><label>Email Technicien</label><input id="techEmail" class="input" type="email" required autocomplete="username"></div>
+          <div class="field"><label>Mot de passe</label><input id="techPassword" class="input" type="password" required autocomplete="current-password"></div>
+          <button id="techLoginBtn" class="btn primary" type="submit" style="width:100%">Entrer en Technicien</button>
+        </form>
+        <div class="notice" style="margin-top:14px">
+          Les comptes Techniciens sont créés par un Manager depuis la rubrique <b>Utilisateurs</b>.
+        </div>
+      </div>
+    </div>
+
+    <div id="authMessage" class="notice hidden" style="margin-top:14px;font-weight:700"></div>
+    <style>
+      @media(max-width:760px){.accessGrid{grid-template-columns:1fr!important}}
+    </style>
+  </div>
+</section>
+
+<div id="appScreen" class="hidden">
+<header class="top">
+  <div class="dots"><i></i><i></i><i></i></div>
+  <div class="brand"><b>Super Support IT</b><small>Planning ITSM sécurisé</small></div>
+  <input id="globalSearch" class="search" placeholder="Rechercher ticket, parent, utilisateur, tech…">
+  <div class="grow"></div>
+  <div id="who" class="userBox"></div>
+  <button id="newTop" class="btn primary managerOnly">＋ Nouveau ticket</button>
+  <button id="logout" class="btn dark">Déconnexion</button>
+</header>
+
+<div class="app">
+<aside class="side">
+  <div class="sideLabel">Workspace</div>
+  <button class="nav active" data-view="calendar"><span class="ico">▦</span>Agenda semaine</button>
+  <button class="nav" data-view="tickets"><span class="ico">◫</span>Tickets<span class="n" id="navTicketCount">0</span></button>
+  <button class="nav managerOnly" data-view="kpi"><span class="ico">◩</span>KPI & activité</button>
+  <button class="nav managerOnly" data-view="users"><span class="ico">◎</span>Utilisateurs</button>
+  <button class="nav managerOnly" data-view="config"><span class="ico">⚙</span>Configuration</button>
+
+  <div class="sideLabel">Vues rapides</div>
+  <button class="nav" id="quickBlocking"><span class="ico">!</span>Incidents bloquants<span class="n" id="blockingCount">0</span></button>
+  <button class="nav" id="quickWaiting"><span class="ico">⌛</span>En attente<span class="n" id="waitingCount">0</span></button>
+  <button class="nav" id="quickClosed"><span class="ico">✓</span>Clôturés<span class="n" id="closedCount">0</span></button>
+</aside>
+
+<main class="main">
+
+<section id="calendarView">
+  <div class="pageHead">
+    <div class="pageTitle"><b>Agenda équipe</b><small>Manager : équipe complète • Technicien : uniquement ses tickets</small></div>
+    <div class="headBtns"><select id="techFilter" class="select"></select><select id="statusFilter" class="select"></select></div>
+  </div>
+  <div id="topKpis" class="kpis"></div>
+  <div class="card">
+    <div class="toolbar">
+      <button id="prevWeek" class="btn ghost">‹</button>
+      <button id="todayWeek" class="btn ghost">Aujourd'hui</button>
+      <button id="nextWeek" class="btn ghost">›</button>
+      <div id="weekTitle" class="weekTitle"></div>
+      <div class="grow"></div>
+      <button id="planTicket" class="btn primary managerOnly">＋ Planifier</button>
+    </div>
+    <div class="calwrap"><div id="calendar" class="calendar"></div></div>
+  </div>
+</section>
+
+<section id="ticketsView" class="hidden">
+  <div class="pageHead">
+    <div class="pageTitle"><b>Tickets</b><small>Historique complet avec commentaires nominatifs</small></div>
+    <div class="headBtns">
+      <select id="listTechFilter" class="select"></select>
+      <select id="listStatusFilter" class="select"></select>
+      <button id="newList" class="btn primary managerOnly">＋ Nouveau</button>
+    </div>
+  </div>
+  <div class="listCard">
+    <div class="listHeader"><div>N°</div><div>Description</div><div>Technicien</div><div>Statut</div><div>Priorité</div><div>Bloquant</div><div>Arrivée</div><div>Parent</div></div>
+    <div id="ticketList"></div>
+  </div>
+</section>
+
+<section id="kpiView" class="hidden managerOnly">
+  <div class="pageHead">
+    <div class="pageTitle"><b>KPI & activité</b><small>Vue Manager uniquement</small></div>
+    <div class="headBtns"><button id="exportExcel" class="btn success">Exporter Excel</button></div>
+  </div>
+  <div id="kpiCards" class="kpis"></div>
+  <div class="dataCard">
+    <table class="tbl">
+      <thead><tr><th>Technicien</th><th>Assignés</th><th>En cours</th><th>En attente</th><th>Bloquants</th><th>Clôturés</th></tr></thead>
+      <tbody id="techKpi"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="usersView" class="hidden managerOnly">
+  <div class="pageHead"><div class="pageTitle"><b>Utilisateurs</b><small>Création des comptes et rôles</small></div></div>
+  <div class="record">
+    <div class="recordTitle">Créer un utilisateur</div>
+    <form id="newUserForm" class="g2">
+      <div class="field"><label>Nom</label><input id="newUserName" class="input" required></div>
+      <div class="field"><label>Email</label><input id="newUserEmail" class="input" type="email" required></div>
+      <div class="field"><label>Mot de passe initial</label><input id="newUserPassword" class="input" type="password" minlength="10" required></div>
+      <div class="field"><label>Rôle</label><select id="newUserRole" class="select"><option value="technician">Technicien</option><option value="manager">Manager</option></select></div>
+      <div class="field full"><button class="btn primary" type="submit">Créer le compte</button></div>
+    </form>
+  </div>
+  <div class="dataCard">
+    <table class="tbl">
+      <thead><tr><th>Utilisateur</th><th>Rôle</th><th>Début</th><th>Fin</th><th>Compte</th></tr></thead>
+      <tbody id="usersBody"></tbody>
+    </table>
+  </div>
+</section>
+
+<section id="configView" class="hidden managerOnly">
+  <div class="pageHead"><div class="pageTitle"><b>Configuration</b><small>Catégories, types, statuts, priorités et matériel</small></div></div>
+  <div class="configGrid">
+    <div id="configTabs" class="configNav"></div>
+    <div id="configPanel" class="configPanel"></div>
+  </div>
+</section>
+
+</main>
+</div>
+
+<div id="ticketOverlay" class="overlay">
+<div class="panel">
+  <header class="panelHead">
+    <div class="panelHeadTop"><span class="pill">ITSM RECORD</span><button id="closePanel" class="closeX">Fermer ✕</button></div>
+    <h2 id="panelTitle">Ticket</h2><div id="panelMeta" class="meta"></div>
+  </header>
+
+  <div class="panelBody">
+    <form id="ticketForm">
+      <input id="ticketId" type="hidden">
+
+      <section class="record"><div class="recordTitle">Identification & arrivée</div><div class="g2">
+        <div class="field"><label>N° ticket</label><input id="ticketNumber" class="input" required></div>
+        <div class="field"><label>Date / heure d'arrivée</label><input id="arrivalAt" class="input" type="datetime-local" required></div>
+        <div class="field"><label>Technicien</label><select id="ticketTech" class="select" required></select></div>
+        <div class="field"><label>Statut</label><select id="ticketStatus" class="select" required></select></div>
+        <div class="field"><label>Priorité</label><select id="ticketPriority" class="select" required></select></div>
+        <div class="field"><label>Catégorie</label><select id="ticketCategory" class="select" required></select></div>
+        <div class="field"><label>Type d'intervention</label><select id="ticketType" class="select" required></select></div>
+        <div class="field"><label>Incident parent</label><input id="parentIncident" class="input" placeholder="INC-MAJOR-001"></div>
+        <div class="field full"><div class="checkline"><input id="isBlocking" type="checkbox"><div><b>Incident bloquant</b><div class="muted" style="font-size:9px">Indicateur rouge et suivi dans les KPI.</div></div></div></div>
+      </div></section>
+
+      <section class="record"><div class="recordTitle">Ticket</div><div class="g2">
+        <div class="field full"><label>Titre</label><input id="ticketSubject" class="input" required></div>
+        <div class="field"><label>Utilisateur / client</label><input id="ticketUser" class="input"></div>
+        <div class="field"><label>Incident général / service</label><input id="generalIncidentLabel" class="input"></div>
+        <div class="field full"><label>Description</label><textarea id="ticketDescription" class="textarea"></textarea></div>
+      </div></section>
+
+      <section class="record"><div class="recordTitle">Planification</div><div class="g2">
+        <div class="field"><label>Date</label><input id="plannedDate" class="input" type="date" required></div>
+        <div class="field"><label>Début</label><input id="plannedStart" class="input" type="time" required></div>
+        <div class="field"><label>Fin</label><input id="plannedEnd" class="input" type="time" required></div>
+      </div></section>
+
+      <section class="record"><div class="recordTitle">Matériel nécessaire</div>
+        <div id="materialsBox" class="materials"></div>
+        <button id="addMaterialBtn" type="button" class="btn small primary" style="margin-top:8px">＋ Ajouter matériel</button>
+      </section>
+
+      <section class="record"><div class="recordTitle">Résolution</div>
+        <div class="field"><label>Commentaire de résolution</label><textarea id="resolutionComment" class="textarea"></textarea></div>
+        <div id="closedInfo" class="notice hidden" style="margin-top:8px"></div>
+      </section>
+
+      <button id="saveTicketBtn" class="btn primary" type="submit">Enregistrer le ticket</button>
+    </form>
+
+    <section id="commentSection" class="record hidden" style="margin-top:12px">
+      <div class="recordTitle">Journal d'activité</div>
+      <div class="field"><textarea id="newComment" class="textarea" placeholder="Ajouter un commentaire…"></textarea></div>
+      <button id="addCommentBtn" class="btn primary small" type="button">Ajouter le commentaire</button>
+      <div id="commentsList" class="timeline"></div>
+    </section>
+  </div>
+
+  <div class="stickyActions">
+    <button id="deleteTicketBtn" class="btn danger" type="button">Supprimer</button>
+    <button id="reopenTicketBtn" class="btn ghost hidden" type="button">Réouvrir</button>
+    <button id="closeTicketBtn" class="btn success" type="button">Clôturer</button>
+  </div>
+</div>
+</div>
+
+<div id="toast" class="toast"></div>
+</div>
+
+<script>
+window.addEventListener('error',function(e){
+  const box=document.getElementById('authMessage');
+  if(box){box.textContent='Erreur JavaScript : '+(e.message||'inconnue');box.classList.remove('hidden');}
+});
+window.addEventListener('unhandledrejection',function(e){
+  const box=document.getElementById('authMessage');
+  const msg=e.reason?.message||String(e.reason||'Erreur inconnue');
+  if(box){box.textContent='Erreur technique : '+msg;box.classList.remove('hidden');}
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+if(!window.supabase){
+  document.write('<script src="https://unpkg.com/@supabase/supabase-js@2"><\/script>');
+}
+</script>
+<script src="./app-v3.js?v=1"></script>
+<script>
+(function(){
+  const box=document.getElementById('authMessage');
+  const show=(m)=>{if(box){box.textContent=m;box.classList.remove('hidden')}};
+  if(!window.supabase?.createClient){show('Supabase ne se charge pas dans le navigateur.');return}
+  const authClient=window.SSI_SUPABASE || window.supabase.createClient(
+    'https://ilxdqvbcvcwfklvkyfoj.supabase.co',
+    'sb_publishable_7f0bDxce4zdPCr5_4go4Wg_S6wlEPFY'
+  );
+
+  async function directLogin(role,email,password){
+    show('Connexion en cours…');
+    try{
+      const {data,error}=await authClient.auth.signInWithPassword({
+        email:String(email||'').trim().toLowerCase(),
+        password:String(password||'')
+      });
+      if(error){show('Connexion refusée : '+error.message);return}
+      if(!data?.session?.user){show('Connexion impossible : Supabase n’a retourné aucune session.');return}
+
+      const {data:profile,error:profileError}=await authClient
+        .from('profiles').select('*').eq('id',data.session.user.id).single();
+
+      if(profileError||!profile){
+        show('Identifiants corrects mais profil applicatif introuvable : '+(profileError?.message||'profil absent'));
+        return
+      }
+      if(profile.role!==role){
+        await authClient.auth.signOut();
+        show(role==='manager'?'Ce compte n’est pas Manager.':'Ce compte n’est pas Technicien.');
+        return
+      }
+      if(!profile.active){
+        await authClient.auth.signOut();show('Ce compte est désactivé.');return
+      }
+
+      show('Connexion réussie en '+(role==='manager'?'Manager':'Technicien')+'. Chargement…');
+      if(typeof window.enterSession!=='function'){
+        show('Connexion réussie, mais le moteur applicatif n’est pas disponible'
+          +(window.SSI_BOOT_ERROR?' : '+window.SSI_BOOT_ERROR:'.'));
+        return
+      }
+      try{
+        await window.enterSession(data.session);
+        show('Connexion réussie.');
+      }catch(appErr){
+        console.error('APP LOAD ERROR',appErr);
+        show('Connexion réussie mais chargement de l’application impossible : '+(appErr?.message||appErr));
+      }
+    }catch(err){
+      show('Erreur technique : '+(err?.message||err));
+      console.error(err);
+    }
+  }
+
+  const mf=document.getElementById('managerLoginForm');
+  const tf=document.getElementById('techLoginForm');
+  if(mf){
+    mf.onsubmit=function(e){
+      e.preventDefault();
+      const email=document.getElementById('managerEmail').value.trim();
+      const password=document.getElementById('managerPassword').value;
+      const passErr=document.getElementById('managerPasswordError');
+      if(!email){
+        show('Email Manager requis.');
+        return false;
+      }
+      if(!password){
+        if(passErr)passErr.style.display='block';
+        show('Mot de passe requis : saisis ton mot de passe Manager avant de cliquer.');
+        document.getElementById('managerPassword').focus();
+        return false;
+      }
+      if(passErr)passErr.style.display='none';
+      directLogin('manager',email,password);
+      return false;
+    };
+  }
+  if(tf){
+    tf.onsubmit=function(e){
+      e.preventDefault();
+      directLogin('technician',
+        document.getElementById('techEmail').value,
+        document.getElementById('techPassword').value);
+      return false;
+    };
+  }
+  show('Compte Manager détecté. Saisis ton mot de passe puis clique sur Entrer en Manager.');
+})();
+</script>
+</body>
+</html>
