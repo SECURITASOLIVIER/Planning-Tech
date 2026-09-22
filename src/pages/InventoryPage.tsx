@@ -1,10 +1,12 @@
 import { FormEvent,useMemo,useState } from 'react'
 import { useQuery,useQueryClient } from '@tanstack/react-query'
-import { ArrowDownToLine,ArrowUpFromLine,Boxes,ChevronRight,History,PackagePlus,Search,SlidersHorizontal,Wrench,X } from 'lucide-react'
+import { ArrowDownToLine,ArrowUpFromLine,Boxes,ChevronRight,Download,History,PackagePlus,Search,SlidersHorizontal,Wrench,X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { useAuth } from '../auth/AuthProvider'
 import type { InventoryItem,InventoryMovement,Profile,Ticket } from '../lib/types'
 import { inventoryAvailable } from '../lib/types'
+import * as XLSX from 'xlsx'
+import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
 
 type StockFilter='all'|'ok'|'low'|'out'
 type ActiveFilter='all'|'active'|'inactive'
@@ -34,6 +36,7 @@ export function InventoryPage(){
  const [panelMode,setPanelMode]=useState<PanelMode>('none')
  const [movementType,setMovementType]=useState('INTERVENTION_USE')
  const [movementOpen,setMovementOpen]=useState(false)
+ const [selectedMovement,setSelectedMovement]=useState<InventoryMovement|null>(null)
  const [search,setSearch]=useState('')
  const [movementSearch,setMovementSearch]=useState('')
  const [category,setCategory]=useState('')
@@ -178,6 +181,29 @@ export function InventoryPage(){
 
  const hasFilters=!!(search||category||manufacturer||stock!=='all'||active!=='all')
  const selectedAvailable=selected?inventoryAvailable(selected):0
+ const selectedItemMovements=selected?movements.filter(m=>m.item_id===selected.id):[]
+
+ const exportFiltered=()=>{
+  const wb=XLSX.utils.book_new()
+  if(view==='catalog'){
+   addSheet(wb,'Inventaire filtré',rows.map(i=>({
+    id:i.id,categorie:i.category,constructeur:i.manufacturer||'',modele:i.model,reference:i.reference||'',description:i.description||'',
+    prix_unitaire:Number(i.unit_price||0),quantite_totale:i.quantity_total,reserve:i.quantity_reserved,attribue:i.quantity_assigned,
+    disponible:inventoryAvailable(i),stock_minimum:i.stock_minimum,emplacement:i.location||'',suivi_unitaire:i.tracked_individually?'Oui':'Non',
+    actif:i.active?'Oui':'Non',cree_le:excelDate(i.created_at),modifie_le:excelDate(i.updated_at)
+   })))
+   addSheet(wb,'Filtres',[{recherche:search,categorie:category||'Toutes',constructeur:manufacturer||'Tous',stock,etat:active,resultats:rows.length}])
+  }else{
+   addSheet(wb,'Mouvements filtrés',movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id),actor=profiles.find(p=>p.id===m.actor_id);return {
+    id:m.id,date:excelDate(m.created_at),item_id:m.item_id,categorie:i?.category||'',constructeur:i?.manufacturer||'',modele:i?.model||'',reference:i?.reference||'',
+    mouvement:m.movement_type,mouvement_libelle:movementLabels[m.movement_type]||m.movement_type,quantite:m.quantity,ancien_total:m.old_total,nouveau_total:m.new_total,
+    ticket_id:m.ticket_id||'',ticket:m.ticket_number_snapshot||'',allocation_id:m.allocation_id||'',beneficiaire:m.assignee||'',acteur_id:m.actor_id||'',
+    acteur:actor?.display_name||'',motif:m.reason||'',note:m.note||''
+   }}) )
+   addSheet(wb,'Filtres',[{recherche:movementSearch,resultats:movementRows.length}])
+  }
+  downloadWorkbook(wb,'PlanningSecuritas_'+(view==='catalog'?'Inventaire':'Mouvements')+'_'+new Date().toISOString().slice(0,10)+'.xlsx')
+ }
  const movementTypeOptions=manager
   ?['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN','ADJUSTMENT_IN','ADJUSTMENT_OUT','LOST','BROKEN','RETIRED']
   :['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN']
@@ -185,7 +211,7 @@ export function InventoryPage(){
  return <div className="page inventory-page">
   <header className="page-head">
    <div><h1>{manager?'Inventaire':'Matériel'}</h1><p>Catalogue, entrées/sorties, utilisation en intervention et justification des mouvements.</p></div>
-   {manager&&<button className="primary page-primary-action" onClick={newItem}><PackagePlus size={16}/><span>Nouvelle référence</span></button>}
+   <div className="actions inventory-head-actions"><button className="secondary page-primary-action" onClick={exportFiltered}><Download size={16}/> Export filtré</button>{manager&&<button className="primary page-primary-action" onClick={newItem}><PackagePlus size={16}/><span>Nouvelle référence</span></button>}</div>
   </header>
 
   <div className="module-tabs inventory-tabs">
@@ -193,11 +219,11 @@ export function InventoryPage(){
    <button className={view==='movements'?'primary':'ghost'} onClick={()=>setView('movements')}><History size={15}/> Mouvements</button>
   </div>
 
-  <section className="grid four inventory-kpis">
-   <div className="kpi"><b>{items.length}</b><span>Références</span></div>
-   <div className="kpi"><b>{items.reduce((s,i)=>s+inventoryAvailable(i),0)}</b><span>Unités disponibles</span></div>
-   <div className="kpi danger"><b>{items.filter(i=>inventoryAvailable(i)<=i.stock_minimum).length}</b><span>Stocks faibles</span></div>
-   <div className="kpi good"><b>{value.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</b><span>Valeur stock</span></div>
+  <section className="grid four inventory-kpis clickable-kpis">
+   <button className="kpi kpi-button" onClick={()=>{setView('catalog');clearFilters()}}><b>{items.length}</b><span>Références</span><ChevronRight size={14}/></button>
+   <button className="kpi kpi-button" onClick={()=>{setView('catalog');setStock('ok')}}><b>{items.reduce((s,i)=>s+inventoryAvailable(i),0)}</b><span>Unités disponibles</span><ChevronRight size={14}/></button>
+   <button className="kpi kpi-button danger" onClick={()=>{setView('catalog');setStock('low')}}><b>{items.filter(i=>inventoryAvailable(i)<=i.stock_minimum).length}</b><span>Stocks faibles</span><ChevronRight size={14}/></button>
+   <button className="kpi kpi-button good" onClick={()=>{setView('catalog');clearFilters()}}><b>{value.toLocaleString('fr-FR',{style:'currency',currency:'EUR'})}</b><span>Valeur stock</span><ChevronRight size={14}/></button>
   </section>
 
   {view==='catalog'&&<>
@@ -269,6 +295,12 @@ export function InventoryPage(){
       </form>}
      </>}
 
+     <h3 className="section-title"><History size={15}/> Historique de cette référence</h3>
+     <div className="planning-history-list">
+      {selectedItemMovements.length===0&&<span className="muted">Aucun mouvement.</span>}
+      {selectedItemMovements.map(m=>{const actor=profiles.find(p=>p.id===m.actor_id);return <button type="button" className="planning-stock-row detail-row-button" key={m.id} onClick={()=>setSelectedMovement(m)}><b>{movementLabels[m.movement_type]||m.movement_type} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.ticket_number_snapshot||'Sans ticket'} • {actor?.display_name||'Utilisateur'}</small><span>{m.reason}</span></button>})}
+     </div>
+
      {manager&&<form className="form-grid detail-form" onSubmit={save} key={selected?.id||'new'}>
       <label>Catégorie<input name="category" defaultValue={selected?.category||''} required/></label>
       <label>Constructeur<input name="manufacturer" defaultValue={selected?.manufacturer||''}/></label>
@@ -293,9 +325,22 @@ export function InventoryPage(){
     <div className="module-filter-grid"><label className="wide-filter">Recherche<input value={movementSearch} onChange={e=>setMovementSearch(e.target.value)} placeholder="Matériel, motif, ticket, bénéficiaire…"/></label></div>
    </section>
 
-   <div className="table-wrap desktop-only"><table><thead><tr><th>Date</th><th>Matériel</th><th>Mouvement</th><th>Qté</th><th>Ticket</th><th>Motif</th><th>Bénéficiaire</th><th>Acteur</th></tr></thead><tbody>{movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id);const actor=profiles.find(p=>p.id===m.actor_id);return <tr key={m.id}><td>{new Date(m.created_at).toLocaleString('fr-FR')}</td><td><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||m.item_id}</b><br/><small>{i?.reference||''}</small></td><td><span className="badge">{movementLabels[m.movement_type]||m.movement_type}</span></td><td>{m.quantity}</td><td>{m.ticket_number_snapshot||'—'}</td><td>{m.reason}</td><td>{m.assignee||'—'}</td><td>{actor?.display_name||m.actor_id||'Système'}</td></tr>})}</tbody></table></div>
+   <div className="table-wrap desktop-only"><table><thead><tr><th>Date</th><th>Matériel</th><th>Mouvement</th><th>Qté</th><th>Ticket</th><th>Motif</th><th>Bénéficiaire</th><th>Acteur</th></tr></thead><tbody>{movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id);const actor=profiles.find(p=>p.id===m.actor_id);return <tr key={m.id} className="clickable-row" onClick={()=>setSelectedMovement(m)}><td>{new Date(m.created_at).toLocaleString('fr-FR')}</td><td><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||m.item_id}</b><br/><small>{i?.reference||''}</small></td><td><span className="badge">{movementLabels[m.movement_type]||m.movement_type}</span></td><td>{m.quantity}</td><td>{m.ticket_number_snapshot||'—'}</td><td>{m.reason}</td><td>{m.assignee||'—'}</td><td>{actor?.display_name||m.actor_id||'Système'}</td></tr>})}</tbody></table></div>
 
-   <div className="module-mobile-list">{movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id);const actor=profiles.find(p=>p.id===m.actor_id);return <article className="module-mobile-card" key={m.id}><div className="module-mobile-head"><div><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||'Matériel'}</b><small>{new Date(m.created_at).toLocaleString('fr-FR')} • {m.ticket_number_snapshot||'Sans ticket'}</small></div><span className="badge">{movementLabels[m.movement_type]||m.movement_type}</span></div><div className="module-mobile-meta"><div><span>Quantité</span><b>{m.quantity}</b></div><div><span>Acteur</span><b>{actor?.display_name||'Utilisateur'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div></div><div className="detail-description"><b>Motif :</b> {m.reason}</div></article>})}</div>
+   <div className="module-mobile-list">{movementRows.map(m=>{const i=items.find(x=>x.id===m.item_id);const actor=profiles.find(p=>p.id===m.actor_id);return <article className="module-mobile-card clickable-row" key={m.id} onClick={()=>setSelectedMovement(m)}><div className="module-mobile-head"><div><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||'Matériel'}</b><small>{new Date(m.created_at).toLocaleString('fr-FR')} • {m.ticket_number_snapshot||'Sans ticket'}</small></div><span className="badge">{movementLabels[m.movement_type]||m.movement_type}</span></div><div className="module-mobile-meta"><div><span>Quantité</span><b>{m.quantity}</b></div><div><span>Acteur</span><b>{actor?.display_name||'Utilisateur'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div></div><div className="detail-description"><b>Motif :</b> {m.reason}</div></article>})}</div>
+   {selectedMovement&&<section className="card inline-data-panel"><div className="inline-data-head"><div><small>Détail mouvement</small><h2>{movementLabels[selectedMovement.movement_type]||selectedMovement.movement_type}</h2></div><button className="ghost small" onClick={()=>setSelectedMovement(null)}><X size={15}/></button></div><div className="detail-summary-grid">{Object.entries({
+    Date:excelDate(selectedMovement.created_at),
+    Matériel:[items.find(i=>i.id===selectedMovement.item_id)?.manufacturer,items.find(i=>i.id===selectedMovement.item_id)?.model].filter(Boolean).join(' ')||selectedMovement.item_id,
+    Référence:items.find(i=>i.id===selectedMovement.item_id)?.reference||'—',
+    Quantité:selectedMovement.quantity,
+    'Ancien total':selectedMovement.old_total??'—',
+    'Nouveau total':selectedMovement.new_total??'—',
+    Ticket:selectedMovement.ticket_number_snapshot||'—',
+    Bénéficiaire:selectedMovement.assignee||'—',
+    Acteur:profiles.find(p=>p.id===selectedMovement.actor_id)?.display_name||selectedMovement.actor_id||'—',
+    Motif:selectedMovement.reason||'—',
+    Note:selectedMovement.note||'—'
+   }).map(([k,v])=><div key={k}><span>{k}</span><b>{String(v)}</b></div>)}</div></section>}
   </>}
  </div>
 }
