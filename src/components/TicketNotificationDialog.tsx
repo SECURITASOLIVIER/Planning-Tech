@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { outlookComposeUrl, type TicketNotificationType } from '../lib/ticketNotification'
 
 export interface PendingTicketNotification{
+ notificationId:number
  ticketId:string
  ticketNumber:string
  type:TicketNotificationType
@@ -12,20 +13,21 @@ export interface PendingTicketNotification{
 }
 
 export function TicketNotificationDialog({
- notification,onConfirm
-}:{notification:PendingTicketNotification;onConfirm:(confirmed:boolean,outlookOpened:boolean)=>Promise<void>}){
+ notification,onOpenOutlook,onConfirm
+}:{notification:PendingTicketNotification;onOpenOutlook:()=>Promise<void>;onConfirm:(confirmed:boolean)=>Promise<void>}){
  const [opened,setOpened]=useState(false)
  const [busy,setBusy]=useState(false)
 
- const openOutlook=()=>{
+ const openOutlook=async()=>{
   const url=outlookComposeUrl(notification.recipients,notification.subject,notification.body)
   window.open(url,'_blank','noopener,noreferrer')
   setOpened(true)
+  try{await onOpenOutlook()}catch{}
  }
 
  const finish=async(confirmed:boolean)=>{
   setBusy(true)
-  try{await onConfirm(confirmed,opened)}finally{setBusy(false)}
+  try{await onConfirm(confirmed)}finally{setBusy(false)}
  }
 
  return <div className="drawer-backdrop notification-backdrop">
@@ -35,7 +37,7 @@ export function TicketNotificationDialog({
    <div className="notification-recipients"><span>Destinataires</span>{notification.recipients.length?notification.recipients.map(x=><b key={x}>{x}</b>):<b className="warning-text">Aucun destinataire configuré</b>}</div>
    <div className="notification-preview"><span>Objet Outlook</span><b>{notification.subject}</b><pre>{notification.body}</pre></div>
    <div className="notification-actions">
-    <button className="secondary" onClick={openOutlook} disabled={!notification.recipients.length||busy}><Send size={15}/> Ouvrir Outlook</button>
+    <button className="secondary" onClick={()=>void openOutlook()} disabled={!notification.recipients.length||busy}><Send size={15}/> Ouvrir Outlook</button>
     <button className="primary" onClick={()=>void finish(true)} disabled={busy||!notification.recipients.length}><CheckCircle2 size={15}/> Oui, envoyé à tous</button>
     <button className="ghost" onClick={()=>void finish(false)} disabled={busy}><XCircle size={15}/> Pas encore envoyé</button>
    </div>
