@@ -13,6 +13,7 @@ export interface Ticket{
  parent_incident:string|null; general_incident_label:string|null; resolution_comment:string|null;
  closed_at:string|null; closed_by?:string|null; created_by:string|null; created_at:string; updated_at:string;
  customer_id?:string|null; customer_contact_id?:string|null;
+ intervention_cost?:number; intervention_cost_note?:string|null;
 }
 
 export interface Customer{
@@ -39,6 +40,7 @@ export interface InventoryMovement{
  id:number; item_id:string; movement_type:string; quantity:number; old_total:number|null; new_total:number|null;
  ticket_id:string|null; ticket_number_snapshot:string|null; allocation_id:string|null; assignee:string|null;
  actor_id:string|null; note:string|null; reason:string; created_at:string;
+ unit_price_snapshot?:number|null; total_cost_snapshot?:number|null;
 }
 
 export interface CommunicationTemplate{
