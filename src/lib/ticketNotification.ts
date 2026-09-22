@@ -43,10 +43,7 @@ export function buildTicketNotification(
  return {subject,body:lines.join('\n')}
 }
 
-export function outlookComposeUrl(recipients:string[],subject:string,body:string){
- const params=new URLSearchParams()
- params.set('to',recipients.join(';'))
- params.set('subject',subject)
- params.set('body',body)
- return 'https://outlook.office.com/mail/deeplink/compose?'+params.toString()
+export function mailtoComposeUrl(recipients:string[],subject:string,body:string){
+ const to=recipients.map(x=>x.trim()).filter(Boolean).join(',')
+ return 'mailto:'+to+'?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body)
 }
