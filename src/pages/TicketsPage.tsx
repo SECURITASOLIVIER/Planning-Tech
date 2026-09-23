@@ -184,17 +184,20 @@ export function TicketsPage(){
   await prepareNotification(saved,action)
  }
 
- const addComment=async()=>{
+ const addComment=async(scope:'internal'|'notification')=>{
   if(!selected?.id||!profile)return
   const body=commentText.trim()
   if(!body){notify('Saisis un commentaire avant de l’ajouter.','error');return}
   try{
    setCommentBusy(true)
-   const {error}=await supabase.from('ticket_comments').insert({ticket_id:selected.id,author_id:profile.id,body})
+   const {error}=await supabase.from('ticket_comments').insert({ticket_id:selected.id,author_id:profile.id,body,comment_scope:scope})
    if(error){notify(error.message,'error');return}
    setCommentText('')
-   notify('Commentaire ajouté.')
+   notify(scope==='internal'?'Commentaire interne ajouté.':'Commentaire notification ajouté.')
    await qc.invalidateQueries({queryKey:['comments',selected.id]})
+   if(scope==='notification'){
+    await prepareNotification(selected as Ticket,'comment')
+   }
   }finally{setCommentBusy(false)}
  }
 
@@ -383,7 +386,7 @@ export function TicketsPage(){
    })))
    addSheet(wb,'Destinataires ticket',(recipientsQ.data||[]).map((r:any)=>({id:r.id,ticket_id:r.ticket_id,ticket:tickets.find(t=>t.id===r.ticket_id)?.ticket_number||'',email:r.email,ajoute_par:r.added_by||'',date:excelDate(r.created_at)})))
    addSheet(wb,'Notifications Outlook',(notificationsQ.data||[]).map((n:any)=>({id:n.id,ticket_id:n.ticket_id,ticket:tickets.find(t=>t.id===n.ticket_id)?.ticket_number||'',type:n.notification_type,objet:n.subject,message:n.body,destinataires:(n.recipients||[]).join('; '),acteur_id:n.actor_id||'',acteur:techName(n.actor_id),outlook_ouvert_le:excelDate(n.outlook_opened_at),confirmation:n.confirmation_status,confirme_le:excelDate(n.confirmed_at),cree_le:excelDate(n.created_at)})))
-   addSheet(wb,'Commentaires',(commentsQ.data||[]).map((c:any)=>({id:c.id,ticket_id:c.ticket_id,ticket:tickets.find(t=>t.id===c.ticket_id)?.ticket_number||'',auteur_id:c.author_id,auteur:c.author_name||techName(c.author_id),commentaire:c.body,date:excelDate(c.created_at)})))
+   addSheet(wb,'Commentaires',(commentsQ.data||[]).map((c:any)=>({id:c.id,ticket_id:c.ticket_id,ticket:tickets.find(t=>t.id===c.ticket_id)?.ticket_number||'',type_commentaire:c.comment_scope==='notification'?'Notification':'Interne',auteur_id:c.author_id,auteur:c.author_name||techName(c.author_id),commentaire:c.body,date:excelDate(c.created_at)})))
    addSheet(wb,'Historique',(historyQ.data||[]).map((h:any)=>({id:h.id,ticket_id:h.ticket_id,ticket:tickets.find(t=>t.id===h.ticket_id)?.ticket_number||'',acteur_id:h.actor_id||'',acteur:techName(h.actor_id),action:h.action,date:excelDate(h.created_at),details:JSON.stringify(h.details||{}),...Object.fromEntries(Object.entries(h.details||{}).map(([k,v])=>['detail_'+k,typeof v==='object'?JSON.stringify(v):v]))})))
    addSheet(wb,'Matériel ticket',(materialsQ.data||[]).map((m:any)=>({id:m.id,ticket_id:m.ticket_id,ticket:tickets.find(t=>t.id===m.ticket_id)?.ticket_number||'',catalog_id:m.catalog_id||'',libelle:m.label,quantite:m.quantity,note:m.note||'',date:excelDate(m.created_at)})))
    addSheet(wb,'Mouvements stock',(movementsQ.data||[]).map((m:any)=>({id:m.id,ticket_id:m.ticket_id||'',ticket:m.ticket_number_snapshot||tickets.find(t=>t.id===m.ticket_id)?.ticket_number||'',item_id:m.item_id,type:m.movement_type,quantite:m.quantity,prix_unitaire_snapshot:Number(m.unit_price_snapshot||0),cout_total_snapshot:Number(m.total_cost_snapshot||0),ancien_total:m.old_total,nouveau_total:m.new_total,allocation_id:m.allocation_id||'',beneficiaire:m.assignee||'',acteur_id:m.actor_id||'',acteur:techName(m.actor_id),motif:m.reason||'',note:m.note||'',date:excelDate(m.created_at)})))
@@ -458,14 +461,14 @@ export function TicketsPage(){
     <section className="ticket-comment-composer">
      <div className="ticket-comment-composer-head"><div><MessageSquarePlus size={16}/><b>Ajouter un commentaire</b></div><span>{commentText.length} caractère{commentText.length>1?'s':''}</span></div>
      <textarea value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Saisis ici le compte rendu, les actions réalisées, le constat ou les informations à transmettre…" rows={7}/>
-     <div className="ticket-comment-actions"><button className="ghost" onClick={()=>setCommunicationTarget('comment')}><MessageSquareText size={15}/> Communication</button><button className="secondary ticket-comment-submit" onClick={()=>void addComment()} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Ajouter le commentaire'}</button></div>
+     <div className="ticket-comment-actions"><button className="ghost" onClick={()=>setCommunicationTarget('comment')}><MessageSquareText size={15}/> Communication</button><button className="secondary ticket-comment-submit internal" onClick={()=>void addComment('internal')} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Commentaire interne'}</button><button className="primary ticket-comment-submit notification" onClick={()=>void addComment('notification')} disabled={commentBusy||!commentText.trim()}><Mail size={15}/>{commentBusy?' Enregistrement…':' Commentaire notification'}</button></div>
     </section>
 
     <h3 className="section-title"><Mail size={15}/> Notifications Outlook ({ticketNotifications.length})</h3>
     <div className="planning-history-list">{ticketNotifications.length===0&&<span className="muted">Aucune notification enregistrée.</span>}{ticketNotifications.map((n:any)=><details className="compact-history" key={n.id}><summary><b>{n.notification_type} • {n.confirmation_status==='confirmed'?'Envoyée':n.confirmation_status==='pending'?'À confirmer':'Non envoyée'}</b><small>{excelDate(n.created_at)} • {techName(n.actor_id)}</small></summary><div className="notification-history-detail"><b>{n.subject}</b><span>Destinataires : {(n.recipients||[]).join('; ')||'Aucun'}</span><span>Outlook ouvert : {n.outlook_opened_at?excelDate(n.outlook_opened_at):'Non tracé'}</span><pre>{n.body}</pre></div></details>)}</div>
 
     <h3 className="section-title"><MessageSquarePlus size={15}/> Commentaires ({comments.length})</h3>
-    <div className="planning-history-list">{comments.length===0&&<span className="muted">Aucun commentaire.</span>}{comments.map((c:any)=><div className="planning-comment-row" key={c.id}><b>{c.author_name||techName(c.author_id)}</b><small>{excelDate(c.created_at)}</small><p>{c.body}</p></div>)}</div>
+    <div className="planning-history-list">{comments.length===0&&<span className="muted">Aucun commentaire.</span>}{comments.map((c:any)=><div className="planning-comment-row" key={c.id}><div className="comment-row-head"><b>{c.author_name||techName(c.author_id)}</b><span className={'badge '+(c.comment_scope==='notification'?'green':'')}>{c.comment_scope==='notification'?'Notification':'Interne'}</span></div><small>{excelDate(c.created_at)}</small><p>{c.body}</p></div>)}</div>
 
     <h3 className="section-title"><History size={15}/> Historique ({history.length})</h3>
     <div className="planning-history-list">{history.length===0&&<span className="muted">Aucun historique.</span>}{history.map((h:any)=><details className="compact-history" key={h.id}><summary><b>{h.action}</b><small>{excelDate(h.created_at)} • {techName(h.actor_id)}</small></summary><pre>{JSON.stringify(h.details||{},null,2)}</pre></details>)}</div>
