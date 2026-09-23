@@ -33,11 +33,11 @@ export default function App(){
    <Route path="inventory" element={<InventoryPage/>}/>
    <Route path="communications" element={<CommunicationsPage/>}/>
    <Route path="history" element={<HistoryPage/>}/>
+   <Route path="kpi" element={<KpiPage/>}/>
   </Route>
   <Route element={<Guard manager/>}>
    <Route path="users" element={<UsersPage/>}/>
    <Route path="clients" element={<ClientsPage/>}/>
-   <Route path="kpi" element={<KpiPage/>}/>
    <Route path="configuration" element={<ConfigPage/>}/>
   </Route>
   <Route path="*" element={<Navigate to="/" replace/>}/>
