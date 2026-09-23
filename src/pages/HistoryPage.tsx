@@ -98,11 +98,11 @@ export function HistoryPage(){
    customer_contact_id:t.customer_contact_id||'',description:t.description||'',categorie:t.category,type:t.intervention_type,statut:t.status,priorite:t.priority,
    technicien_id:t.assigned_to||'',technicien:actorName(t.assigned_to),date_arrivee:excelDate(t.arrival_at),debut_planifie:excelDate(t.planned_start),
    fin_planifie:excelDate(t.planned_end),incident_bloquant:t.is_blocking?'Oui':'Non',incident_parent:t.parent_incident||'',
-   incident_general:t.general_incident_label||'',commentaire_resolution:t.resolution_comment||'',cout_intervention:Number(t.intervention_cost||0),note_cout_intervention:t.intervention_cost_note||'',closed_by:t.closed_by||'',cloture_le:excelDate(t.closed_at),
+   incident_general:t.general_incident_label||'',commentaire_resolution:t.resolution_comment||'',...(manager?{cout_intervention:Number(t.intervention_cost||0),note_cout_intervention:t.intervention_cost_note||''}:{}),closed_by:t.closed_by||'',cloture_le:excelDate(t.closed_at),
    created_by:t.created_by||'',auteur_creation:actorName(t.created_by),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
   })))
   if(manager){addSheet(wb,'KPI Synthese',[{du:from,au:to,ouverts:summary.backlog||0,nouveaux:summary.new_count||0,en_cours:summary.in_progress||0,en_attente:summary.waiting||0,bloquants:summary.blocking||0,clotures:summary.closed||0,crees:summary.created||0,taux_cloture:summary.closure_rate||0,cout_interventions:summary.intervention_cost_total||0,cout_materiel:summary.material_cost_total||0,cout_total:summary.total_cost||0,cout_moyen_intervention:summary.avg_cost_per_intervention||0}]);addSheet(wb,'KPI Techniciens',byTech)}
-  addSheet(wb,'Filtres',[{du:from,au:to,type:kind,recherche:search||'',technicien:technician?actorName(technician):'Tous',demandeur:requester||'Tous',client:customer?clientName(customer):'Tous',resultats:resultCount,tickets_distincts:detailedTickets.length}])
+  addSheet(wb,'Filtres',[{du:from,au:to,type:manager?kind:'tickets',recherche:search||'',technicien:manager?(technician?actorName(technician):'Tous'):(profile?.display_name||'Moi'),demandeur:requester||'Tous',client:customer?clientName(customer):'Tous',resultats:resultCount,tickets_distincts:detailedTickets.length}])
   downloadWorkbook(wb,'PlanningSecuritas_Historique_'+from+'_'+to+'.xlsx');notify('Export Historique téléchargé.')
  }
 
