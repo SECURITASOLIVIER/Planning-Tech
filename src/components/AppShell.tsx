@@ -17,10 +17,10 @@ export function AppShell(){
   ...(manager?[
    item('/clients','Clients',Building2),
    item('/users','Utilisateurs',Users),
-   item('/inventory','Inventaire',Boxes),
-   item('/kpi','KPI',Activity),
+   item('/inventory','Inventaire Admin',Boxes),
+   item('/kpi','KPI équipe',Activity),
    item('/configuration','Configuration',Settings),
-   ]:[item('/inventory','Inventaire',Boxes)])
+   ]:[item('/inventory','Inventaire',Boxes),item('/kpi','Mes KPI',Activity)])
  ]
  return <div className="workspace"><ToastHost/>
   <header className="topbar">
