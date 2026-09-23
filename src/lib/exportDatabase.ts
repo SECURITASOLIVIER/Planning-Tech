@@ -213,3 +213,16 @@ export async function exportCompleteBusinessDatabase(){
  downloadWorkbook(wb,'PlanningSecuritas_BDD_Complete_'+stamp+'.xlsx')
  return counts
 }
+
+
+export async function runCompleteBusinessBackup(){
+ const counts=await exportCompleteBusinessDatabase()
+ const {error}=await supabase.rpc('log_app_action',{
+  p_action:'database_business_backup_exported',
+  p_target_type:'database',
+  p_target_id:null,
+  p_details:{tables:Object.keys(counts).length,row_counts:counts}
+ })
+ if(error)throw new Error('Journal sauvegarde : '+error.message)
+ return counts
+}

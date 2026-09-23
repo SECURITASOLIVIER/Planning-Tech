@@ -1,8 +1,9 @@
-import { FormEvent,useState } from 'react'
+import { FormEvent,useRef,useState } from 'react'
 import { useQuery,useQueryClient } from '@tanstack/react-query'
-import { DatabaseBackup,Download,Mail,Plus,Trash2 } from 'lucide-react'
+import { DatabaseBackup,Download,Mail,Plus,Trash2,Upload } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { exportCompleteBusinessDatabase } from '../lib/exportDatabase'
+import { runCompleteBusinessBackup } from '../lib/exportDatabase'
+import { importCompleteBusinessDatabase } from '../lib/importDatabase'
 import { notify } from '../lib/notify'
 
 const kinds=[['status','Statuts'],['priority','Priorités'],['category','Catégories'],['type','Types']]
@@ -11,6 +12,9 @@ export function ConfigPage(){
  const qc=useQueryClient()
  const [kind,setKind]=useState('status')
  const [backupBusy,setBackupBusy]=useState(false)
+ const [importBusy,setImportBusy]=useState(false)
+ const [importProgress,setImportProgress]=useState('')
+ const importRef=useRef<HTMLInputElement|null>(null)
 
  const {data=[]}=useQuery({queryKey:['config'],queryFn:async()=>{const {data,error}=await supabase.from('config_values').select('*').order('sort_order');if(error)throw error;return data||[]}})
  const {data:distribution=[]}=useQuery({queryKey:['notification-distribution'],queryFn:async()=>{const {data,error}=await supabase.from('notification_distribution_recipients').select('*').order('sort_order').order('email');if(error)throw error;return data||[]}})
@@ -61,11 +65,28 @@ export function ConfigPage(){
  const backup=async()=>{
   try{
    setBackupBusy(true);notify('Préparation de la sauvegarde complète…','info')
-   const counts=await exportCompleteBusinessDatabase()
-   await supabase.rpc('log_app_action',{p_action:'database_business_backup_exported',p_target_type:'database',p_target_id:null,p_details:{tables:Object.keys(counts).length,row_counts:counts}})
+   await runCompleteBusinessBackup()
+   await qc.invalidateQueries({queryKey:['backup-status']})
    notify('Sauvegarde BDD complète Excel téléchargée.')
   }catch(e:any){notify('Erreur sauvegarde : '+(e?.message||'échec'),'error')}
   finally{setBackupBusy(false)}
+ }
+
+ const restore=async(file:File)=>{
+  if(!confirm(`Importer ${file.name} ?\n\nMode sécurisé : les lignes portant les mêmes ID seront mises à jour ou recréées. Aucune table ne sera vidée automatiquement.`))return
+  try{
+   setImportBusy(true);setImportProgress('Lecture de la sauvegarde…');notify('Import de la sauvegarde en cours…','info')
+   const counts=await importCompleteBusinessDatabase(file,p=>setImportProgress(p.message+' ('+p.tableIndex+'/'+p.tableTotal+')'))
+   setImportProgress('Import terminé')
+   await qc.invalidateQueries()
+   notify('Sauvegarde réimportée : '+Object.keys(counts).length+' table(s) traitée(s).')
+  }catch(e:any){
+   setImportProgress('')
+   notify('Erreur import BDD : '+(e?.message||'échec'),'error')
+  }finally{
+   setImportBusy(false)
+   if(importRef.current)importRef.current.value=''
+  }
  }
 
  return <div className="page config-page">
@@ -99,6 +120,16 @@ export function ConfigPage(){
    </div>
   </section>
 
-  <section className="card backup-card"><div className="backup-head"><div><DatabaseBackup size={19}/><div><h3 className="section-title">Sauvegarde complète BDD Excel</h3><p className="muted">Classeur XLSX avec toutes les tables public, une ou plusieurs feuilles par table, les ID, relations, colonnes et ordre de restauration pour une future réintégration. Les secrets, mots de passe Auth et clés serveur sont exclus.</p></div></div><button className="secondary" disabled={backupBusy} onClick={()=>void backup()}><Download size={15}/>{backupBusy?' Préparation…':' Exporter toute la BDD (.xlsx)'}</button></div></section>
+  <section className="card backup-card">
+   <div className="backup-head">
+    <div><DatabaseBackup size={19}/><div><h3 className="section-title">Sauvegarde & restauration BDD Excel</h3><p className="muted">Export complet des tables métier avec ID, relations, colonnes et ordre de restauration. L’import fonctionne en mode sécurisé par upsert : il ne vide pas automatiquement la production. Les mots de passe Auth et secrets serveur restent exclus.</p></div></div>
+    <div className="backup-actions">
+     <button className="secondary" disabled={backupBusy||importBusy} onClick={()=>void backup()}><Download size={15}/>{backupBusy?' Préparation…':' Exporter toute la BDD (.xlsx)'}</button>
+     <button className="ghost" disabled={backupBusy||importBusy} onClick={()=>importRef.current?.click()}><Upload size={15}/>{importBusy?' Import…':' Importer une sauvegarde (.xlsx)'}</button>
+     <input ref={importRef} type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" style={{display:'none'}} onChange={e=>{const f=e.target.files?.[0];if(f)void restore(f)}}/>
+    </div>
+   </div>
+   {importProgress&&<div className="backup-import-progress">{importProgress}</div>}
+  </section>
  </div>
 }
