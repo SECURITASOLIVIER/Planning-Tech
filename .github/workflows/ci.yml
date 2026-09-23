@@ -2,7 +2,7 @@ name: React V2 CI
 
 on:
   push:
-    branches: [refactor/react-v1, feature/backup-import-reminder]
+    branches: [refactor/react-v1]
   pull_request:
     branches: [main]
 
