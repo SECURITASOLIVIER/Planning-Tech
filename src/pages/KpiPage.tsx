@@ -9,10 +9,13 @@ import { addSheet,downloadWorkbook,excelDate } from '../lib/excel'
 import type { Customer,Profile,Ticket } from '../lib/types'
 import { DetailDrawer } from '../components/DetailDrawer'
 import { notify } from '../lib/notify'
+import { useAuth } from '../auth/AuthProvider'
 
 type Metric='backlog'|'new_count'|'in_progress'|'waiting'|'closed'|'blocking'|'reopened'|null
 
 export function KpiPage(){
+ const {profile}=useAuth()
+ const manager=profile?.role==='manager'
  const initial=presetRange('month')
  const [from,setFrom]=useState(initial.from)
  const [to,setTo]=useState(initial.to)
@@ -74,22 +77,26 @@ export function KpiPage(){
 
  const exportExcel=()=>{
   const wb=XLSX.utils.book_new()
-  addSheet(wb,'Synthese KPI',[{
+  addSheet(wb,'Synthese KPI',[manager?{
    du:from,au:to,crees:s.created||0,nouveaux:s.new_count||0,ouverts:s.backlog||0,en_cours:s.in_progress||0,en_attente:s.waiting||0,
    bloquants:s.blocking||0,clotures:s.closed||0,reouverts:s.reopened||0,taux_cloture:s.closure_rate||0,
    delai_moyen_resolution_h:s.avg_resolution_hours||0,delai_prise_en_charge_h:s.avg_takeover_hours||0,
    cout_interventions:s.intervention_cost_total||0,cout_materiel:s.material_cost_total||0,cout_total:s.total_cost||0,cout_moyen_intervention:s.avg_cost_per_intervention||0
+  }:{
+   du:from,au:to,crees:s.created||0,nouveaux:s.new_count||0,ouverts:s.backlog||0,en_cours:s.in_progress||0,en_attente:s.waiting||0,
+   bloquants:s.blocking||0,clotures:s.closed||0,reouverts:s.reopened||0,taux_cloture:s.closure_rate||0,
+   delai_moyen_resolution_h:s.avg_resolution_hours||0,delai_prise_en_charge_h:s.avg_takeover_hours||0
   }])
-  addSheet(wb,'KPI Techniciens',byTech)
+  if(manager)addSheet(wb,'KPI Techniciens',byTech)
   addSheet(wb,'Evolution',timeline)
   addSheet(wb,'Tickets détail',detailTickets.map(t=>({
    id:t.id,numero:t.ticket_number,titre:t.subject,demandeur:t.requester||'',client:clientName(t.customer_id),description:t.description||'',
    categorie:t.category,type:t.intervention_type,statut:t.status,priorite:t.priority,technicien:techName(t.assigned_to),
    technicien_id:t.assigned_to||'',arrivee:excelDate(t.arrival_at),debut_planifie:excelDate(t.planned_start),fin_planifie:excelDate(t.planned_end),
    bloquant:t.is_blocking?'Oui':'Non',incident_parent:t.parent_incident||'',incident_general:t.general_incident_label||'',
-   resolution:t.resolution_comment||'',cout_intervention:Number(t.intervention_cost||0),note_cout:t.intervention_cost_note||'',cloture:excelDate(t.closed_at),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
+   resolution:t.resolution_comment||'',...(manager?{cout_intervention:Number(t.intervention_cost||0),note_cout:t.intervention_cost_note||''}:{}),cloture:excelDate(t.closed_at),cree_le:excelDate(t.created_at),modifie_le:excelDate(t.updated_at)
   })))
-  addSheet(wb,'Filtres',[{du:from,au:to,indicateur:metric||'Tous',technicien:tech?techName(tech):'Tous',tickets_detail:detailTickets.length}])
+  addSheet(wb,'Filtres',[{du:from,au:to,indicateur:metric||'Tous',technicien:manager?(tech?techName(tech):'Tous'):(profile?.display_name||'Moi'),tickets_detail:detailTickets.length}])
   downloadWorkbook(wb,'PlanningSecuritas_KPI_'+from+'_'+to+'.xlsx');notify('Export KPI téléchargé.')
  }
 
@@ -100,7 +107,7 @@ export function KpiPage(){
 
  return <div className="page kpi-page">
   <header className="page-head">
-   <div><h1>KPI Tickets & Techniciens</h1><p>Clique sur un KPI ou un technicien pour afficher les tickets concernés.</p></div>
+   <div><h1>{manager?'KPI Tickets & Techniciens':'Mes KPI Tickets'}</h1><p>{manager?'Clique sur un KPI ou un technicien pour afficher les tickets concernés.':'Uniquement tes tickets et tes indicateurs personnels.'}</p></div>
    <div className="actions">
     <div className="module-tabs"><button className="ghost" onClick={()=>preset('today')}>Aujourd’hui</button><button className="ghost" onClick={()=>preset('7d')}>7 jours</button><button className="ghost" onClick={()=>preset('month')}>Mois</button><button className="ghost" onClick={()=>preset('year')}>Année</button></div>
     <button className="secondary page-primary-action" onClick={exportExcel}><Download size={16}/> Export Excel</button>
@@ -108,11 +115,11 @@ export function KpiPage(){
   </header>
 
   <section className="card module-filter-card">
-   <div className="module-filter-title"><b>Période & technicien</b>{isFetching&&<span>Actualisation…</span>}</div>
+   <div className="module-filter-title"><b>{manager?'Période & technicien':'Période'}</b>{isFetching&&<span>Actualisation…</span>}</div>
    <div className="module-filter-grid">
     <label>Du<input type="date" value={from} onChange={e=>setFrom(e.target.value)}/></label>
     <label>Au<input type="date" value={to} onChange={e=>setTo(e.target.value)}/></label>
-    <label>Technicien<select value={tech} onChange={e=>setTech(e.target.value)}><option value="">Tous</option>{profiles.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.display_name}</option>)}</select></label>
+    {manager&&<label>Technicien<select value={tech} onChange={e=>setTech(e.target.value)}><option value="">Tous</option>{profiles.filter(p=>p.active).map(p=><option key={p.id} value={p.id}>{p.display_name}</option>)}</select></label>}
    </div>
   </section>
 
@@ -127,29 +134,34 @@ export function KpiPage(){
    <div className="kpi"><b>{s.closure_rate??0}%</b><span>Taux de clôture</span></div>
   </section>
 
+  {manager&&<div className="manager-kpi-costs">
   <section className="grid four kpi-grid cost-kpis">
    <div className="kpi"><b>{money(s.intervention_cost_total)}</b><span>Coût interventions</span></div>
    <div className="kpi"><b>{money(s.material_cost_total)}</b><span>Coût matériel utilisé</span></div>
    <div className="kpi good"><b>{money(s.total_cost)}</b><span>Coût total période</span></div>
    <div className="kpi"><b>{money(s.avg_cost_per_intervention)}</b><span>Coût moyen / intervention</span></div>
   </section>
+  </div>}
 
   {(metric||tech)&&<DetailDrawer title={metric?metricTitle[metric]:'Tickets du technicien'} subtitle={(tech?techName(tech)+' • ':'')+detailTickets.length+' ticket(s)'} onClose={()=>{setMetric(null);setTech('');setSelectedTicket(null)}}>
    {metric==='reopened'?<div className="alert">Le compteur des réouvertures provient de l’historique. Consulte l’onglet Historique pour chaque réouverture.</div>:<>
-    {selectedTicket&&<div className="drawer-selected-detail"><h3>{selectedTicket.ticket_number} • {selectedTicket.subject}</h3><div className="detail-summary-grid"><div><span>Client</span><b>{clientName(selectedTicket.customer_id)}</b></div><div><span>Technicien</span><b>{techName(selectedTicket.assigned_to)}</b></div><div><span>Statut</span><b>{selectedTicket.status}</b></div><div><span>Priorité</span><b>{selectedTicket.priority}</b></div><div><span>Catégorie</span><b>{selectedTicket.category}</b></div><div><span>Type</span><b>{selectedTicket.intervention_type}</b></div><div><span>Planifié</span><b>{excelDate(selectedTicket.planned_start)||'—'}</b></div><div><span>Bloquant</span><b>{selectedTicket.is_blocking?'Oui':'Non'}</b></div><div><span>Coût intervention</span><b>{money(selectedTicket.intervention_cost)}</b></div><div><span>Note coût</span><b>{selectedTicket.intervention_cost_note||'—'}</b></div></div>{selectedTicket.description&&<div className="detail-description">{selectedTicket.description}</div>}</div>}
+    {selectedTicket&&<div className="drawer-selected-detail"><h3>{selectedTicket.ticket_number} • {selectedTicket.subject}</h3><div className="detail-summary-grid"><div><span>Client</span><b>{clientName(selectedTicket.customer_id)}</b></div><div><span>Technicien</span><b>{techName(selectedTicket.assigned_to)}</b></div><div><span>Statut</span><b>{selectedTicket.status}</b></div><div><span>Priorité</span><b>{selectedTicket.priority}</b></div><div><span>Catégorie</span><b>{selectedTicket.category}</b></div><div><span>Type</span><b>{selectedTicket.intervention_type}</b></div><div><span>Planifié</span><b>{excelDate(selectedTicket.planned_start)||'—'}</b></div><div><span>Bloquant</span><b>{selectedTicket.is_blocking?'Oui':'Non'}</b></div>{manager&&<><div><span>Coût intervention</span><b>{money(selectedTicket.intervention_cost)}</b></div><div><span>Note coût</span><b>{selectedTicket.intervention_cost_note||'—'}</b></div></>}</div>{selectedTicket.description&&<div className="detail-description">{selectedTicket.description}</div>}</div>}
     <div className="drawer-list">{detailTickets.map(t=><button className={'drawer-list-row '+(selectedTicket?.id===t.id?'selected':'')} key={t.id} onClick={()=>setSelectedTicket(t)}><div><b>{t.ticket_number} • {t.subject}</b><small>{clientName(t.customer_id)} • {techName(t.assigned_to)} • {excelDate(t.planned_start)||'Non planifié'}</small></div><span className="badge">{t.status}</span></button>)}</div>
    </>}
   </DetailDrawer>}
 
   <section className="grid two chart-grid">
    <div className="card"><h3 className="section-title">Créés / clôturés dans le temps</h3><div className="chart-box"><ResponsiveContainer width="100%" height="100%"><LineChart data={timeline}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="period"/><YAxis allowDecimals={false}/><Tooltip/><Legend/><Line type="monotone" dataKey="created" name="Créés"/><Line type="monotone" dataKey="closed" name="Clôturés"/></LineChart></ResponsiveContainer></div></div>
-   <div className="card"><h3 className="section-title">Charge par technicien</h3><div className="chart-box"><ResponsiveContainer width="100%" height="100%"><BarChart data={byTech} onClick={(e:any)=>{const id=e?.activePayload?.[0]?.payload?.id;if(id)setTech(id)}}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="name"/><YAxis allowDecimals={false}/><Tooltip/><Legend/><Bar dataKey="open" name="Ouverts"/><Bar dataKey="in_progress" name="En cours"/><Bar dataKey="closed" name="Clôturés"/></BarChart></ResponsiveContainer></div></div>
+   {manager&&<div className="card"><h3 className="section-title">Charge par technicien</h3><div className="chart-box"><ResponsiveContainer width="100%" height="100%"><BarChart data={byTech} onClick={(e:any)=>{const id=e?.activePayload?.[0]?.payload?.id;if(id)setTech(id)}}><CartesianGrid strokeDasharray="3 3"/><XAxis dataKey="name"/><YAxis allowDecimals={false}/><Tooltip/><Legend/><Bar dataKey="open" name="Ouverts"/><Bar dataKey="in_progress" name="En cours"/><Bar dataKey="closed" name="Clôturés"/></BarChart></ResponsiveContainer></div></div>}
   </section>
 
+  {manager&&<div className="manager-team-kpi">
   <section className="card">
    <h3 className="section-title">KPI par technicien</h3>
    <div className="table-wrap desktop-only"><table><thead><tr><th>Technicien</th><th>Ouverts</th><th>Nouveaux</th><th>En cours</th><th>En attente</th><th>Clôturés</th><th>Bloquants</th><th>Coût intervention</th><th>Matériel</th><th>Total</th></tr></thead><tbody>{byTech.map((t:any)=><tr className="clickable-row" key={t.id} onClick={()=>setTech(t.id)}><td><b>{t.name}</b></td><td>{t.open}</td><td>{t.new_count}</td><td>{t.in_progress}</td><td>{t.waiting}</td><td>{t.closed}</td><td>{t.blocking}</td><td>{money(t.intervention_cost)}</td><td>{money(t.material_cost)}</td><td><b>{money(t.total_cost)}</b></td></tr>)}</tbody></table></div>
    <div className="module-mobile-list">{byTech.map((t:any)=><article className="module-mobile-card clickable-row" key={t.id} onClick={()=>setTech(t.id)}><div className="module-mobile-head"><div><b>{t.name}</b><small>{t.total} ticket(s) créés sur la période</small></div><span className="badge">{t.open} ouverts</span></div><div className="module-mobile-meta"><div><span>Nouveaux</span><b>{t.new_count}</b></div><div><span>En cours</span><b>{t.in_progress}</b></div><div><span>En attente</span><b>{t.waiting}</b></div><div><span>Clôturés</span><b>{t.closed}</b></div><div><span>Coût total</span><b>{money(t.total_cost)}</b></div><div><span>Matériel</span><b>{money(t.material_cost)}</b></div></div></article>)}</div>
   </section>
+  </div>}
+
  </div>
 }
