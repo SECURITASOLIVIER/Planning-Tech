@@ -14,7 +14,7 @@ import { notify } from '../lib/notify'
 import { DetailDrawer } from '../components/DetailDrawer'
 import type { Customer,InventoryItem,Profile,Ticket } from '../lib/types'
 
-type CalendarView='timeGridDay'|'timeGridThreeDay'|'timeGridWeek'|'dayGridMonth'
+type CalendarView='timeGridDay'|'timeGridWeek'|'dayGridMonth'
 const palette=['#1473e6','#00a878','#8b5cf6','#e67e22','#d32f5e','#0097a7','#5c6bc0','#6d8f00','#c44536','#7a4fb7']
 
 export function PlanningPage(){
@@ -25,18 +25,11 @@ export function PlanningPage(){
  const [status,setStatus]=useState('')
  const [search,setSearch]=useState('')
  const [selectedId,setSelectedId]=useState<string|null>(null)
- const [mobile,setMobile]=useState(()=>window.innerWidth<=640)
  const [calendarView,setCalendarView]=useState<CalendarView>(()=>window.innerWidth<=640?'timeGridDay':'timeGridWeek')
  const [title,setTitle]=useState('')
  const [visibleStart,setVisibleStart]=useState<Date|null>(null)
  const [visibleEnd,setVisibleEnd]=useState<Date|null>(null)
  const [fullDay,setFullDay]=useState(()=>localStorage.getItem('planning-hours-mode')==='24h')
-
- useEffect(()=>{
-  const onResize=()=>setMobile(window.innerWidth<=640)
-  window.addEventListener('resize',onResize)
-  return()=>window.removeEventListener('resize',onResize)
- },[])
 
  useEffect(()=>{
   localStorage.setItem('planning-hours-mode',fullDay?'24h':'7-19')
@@ -125,7 +118,6 @@ export function PlanningPage(){
     <div className="planning-actions-right">
      <div className="module-tabs planning-view-tabs">
       <button className={calendarView==='timeGridDay'?'primary':'ghost'} onClick={()=>changeView('timeGridDay')}>Jour</button>
-      <button className={calendarView==='timeGridThreeDay'?'primary':'ghost'} onClick={()=>changeView('timeGridThreeDay')}>3 jours</button>
       <button className={calendarView==='timeGridWeek'?'primary':'ghost'} onClick={()=>changeView('timeGridWeek')}>Semaine</button>
       <button className={calendarView==='dayGridMonth'?'primary':'ghost'} onClick={()=>changeView('dayGridMonth')}>Mois</button>
      </div>
@@ -156,7 +148,6 @@ export function PlanningPage(){
      nowIndicator
      height="auto"
      headerToolbar={false}
-     views={{timeGridThreeDay:{type:'timeGrid',duration:{days:3}}}}
      editable
      selectable
      slotEventOverlap={false}
@@ -190,7 +181,7 @@ export function PlanningPage(){
    <h3 className="section-title"><History size={15}/> Historique ticket</h3>
    <div className="planning-history-list">{history.length===0&&<span className="muted">Aucun historique.</span>}{history.map((h:any)=><details className="compact-history" key={h.id}><summary><b>{h.action}</b><small>{excelDate(h.created_at)}</small></summary><pre>{JSON.stringify(h.details||{},null,2)}</pre></details>)}</div>
    <h3 className="section-title"><UserRound size={15}/> Commentaires</h3>
-   <div className="planning-history-list">{comments.length===0&&<span className="muted">Aucun commentaire.</span>}{comments.map((c:any)=><div className="planning-comment-row" key={c.id}><b>{c.author_name||'Utilisateur'}</b><small>{excelDate(c.created_at)}</small><p>{c.body}</p></div>)}</div>
+   <div className="planning-history-list">{comments.length===0&&<span className="muted">Aucun commentaire.</span>}{comments.map((c:any)=><div className="planning-comment-row" key={c.id}><div className="comment-row-head"><b>{c.author_name||'Utilisateur'}</b><span className={'badge '+(c.comment_scope==='notification'?'green':'')}>{c.comment_scope==='notification'?'Notification':'Interne'}</span></div><small>{excelDate(c.created_at)}</small><p>{c.body}</p></div>)}</div>
    <h3 className="section-title"><Package size={15}/> Matériel / stock</h3>
    <div className="planning-history-list">{movements.length===0&&<span className="muted">Aucun mouvement.</span>}{movements.map((m:any)=>{const i=items.find(x=>x.id===m.item_id);return <details className="compact-history" key={m.id}><summary><b>{[i?.manufacturer,i?.model].filter(Boolean).join(' ')||'Matériel'} × {m.quantity}</b><small>{m.reason||m.movement_type}</small></summary><div className="detail-key-values"><div><span>Date</span><b>{excelDate(m.created_at)}</b></div><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Ticket</span><b>{m.ticket_number_snapshot||'—'}</b></div></div></details>})}</div>
   </DetailDrawer>}
