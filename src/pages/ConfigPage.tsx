@@ -73,9 +73,7 @@ export function ConfigPage(){
  }
 
  const restore=async(file:File)=>{
-  if(!confirm('Importer '+file.name+' ?
-
-Mode sécurisé : les lignes portant les mêmes ID seront mises à jour ou recréées. Aucune table ne sera vidée automatiquement.'))return
+  if(!confirm(`Importer ${file.name} ?\n\nMode sécurisé : les lignes portant les mêmes ID seront mises à jour ou recréées. Aucune table ne sera vidée automatiquement.`))return
   try{
    setImportBusy(true);setImportProgress('Lecture de la sauvegarde…');notify('Import de la sauvegarde en cours…','info')
    const counts=await importCompleteBusinessDatabase(file,p=>setImportProgress(p.message+' ('+p.tableIndex+'/'+p.tableTotal+')'))
