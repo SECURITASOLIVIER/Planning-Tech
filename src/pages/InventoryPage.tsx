@@ -119,6 +119,7 @@ export function InventoryPage(){
  }
 
  const openMovement=(i:InventoryItem,type:string)=>{
+  if(!manager){notify('Inventaire en lecture seule pour les techniciens.','info');return}
   setSelected(i);setPanelMode('detail');setMovementType(type);setMovementOpen(true);setView('catalog')
   setTimeout(()=>document.getElementById('inventory-movement-form')?.scrollIntoView({behavior:'smooth',block:'center'}),80)
  }
@@ -127,6 +128,7 @@ export function InventoryPage(){
 
  const save=async(e:FormEvent<HTMLFormElement>)=>{
   e.preventDefault()
+  if(!manager){notify('Administration de l’inventaire réservée au Manager.','error');return}
   const fd=new FormData(e.currentTarget)
   const row={
    category:String(fd.get('category')),
@@ -149,6 +151,7 @@ export function InventoryPage(){
 
  const recordMovement=async(e:FormEvent<HTMLFormElement>)=>{
   e.preventDefault()
+  if(!manager){notify('Administration de l’inventaire réservée au Manager.','error');return}
   if(!selected)return
   const fd=new FormData(e.currentTarget)
   const type=String(fd.get('movement_type'))
@@ -170,6 +173,7 @@ export function InventoryPage(){
  }
 
  const reserve=async(i:InventoryItem)=>{
+  if(!manager){notify('Administration de l’inventaire réservée au Manager.','error');return}
   const ticket=prompt('ID du ticket à réserver')
   if(!ticket)return
   const qty=Number(prompt('Quantité')||0)
@@ -204,13 +208,11 @@ export function InventoryPage(){
   }
   downloadWorkbook(wb,'PlanningSecuritas_'+(view==='catalog'?'Inventaire':'Mouvements')+'_'+new Date().toISOString().slice(0,10)+'.xlsx');notify('Export '+(view==='catalog'?'Inventaire':'Mouvements')+' téléchargé.')
  }
- const movementTypeOptions=manager
-  ?['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN','ADJUSTMENT_IN','ADJUSTMENT_OUT','LOST','BROKEN','RETIRED']
-  :['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN']
+ const movementTypeOptions=['STOCK_IN','STOCK_OUT','INTERVENTION_USE','RETURN','ADJUSTMENT_IN','ADJUSTMENT_OUT','LOST','BROKEN','RETIRED']
 
  return <div className="page inventory-page">
   <header className="page-head">
-   <div><h1>{manager?'Inventaire':'Matériel'}</h1><p>Catalogue, entrées/sorties, utilisation en intervention et justification des mouvements.</p></div>
+   <div><h1>Inventaire</h1><p>{manager?'Administration complète du stock, mouvements et références.':'Lecture du stock et de son historique. Les consommations se déclarent depuis les tickets autorisés.'}</p></div>
    <div className="actions inventory-head-actions"><button className="secondary page-primary-action" onClick={exportFiltered}><Download size={16}/> Export filtré</button>{manager&&<button className="primary page-primary-action" onClick={newItem}><PackagePlus size={16}/><span>Nouvelle référence</span></button>}</div>
   </header>
 
@@ -274,15 +276,15 @@ export function InventoryPage(){
        <div><span>Total</span><b>{selected.quantity_total}</b></div><div><span>Réservé</span><b>{selected.quantity_reserved}</b></div><div><span>Attribué</span><b>{selected.quantity_assigned}</b></div><div><span>Disponible</span><b>{selectedAvailable}</b></div>
       </div>
       {selected.description&&<div className="detail-description">{selected.description}</div>}
-      <div className="detail-actions inventory-movement-actions">
+      {manager?<div className="detail-actions inventory-movement-actions">
        <button className="secondary" onClick={()=>openMovement(selected,'STOCK_IN')}><ArrowDownToLine size={14}/> Entrée</button>
        <button className="ghost" onClick={()=>openMovement(selected,'STOCK_OUT')}><ArrowUpFromLine size={14}/> Sortie</button>
        <button className="primary" onClick={()=>openMovement(selected,'INTERVENTION_USE')}><Wrench size={14}/> Intervention</button>
        <button className="ghost" onClick={()=>openMovement(selected,'RETURN')}>Retour</button>
        <button className="ghost" onClick={()=>void reserve(selected)}>Réserver</button>
-      </div>
+      </div>:<div className="alert inventory-readonly-note">Mode lecture : les mouvements de stock se font depuis les tickets auxquels tu es affecté.</div>}
 
-      {movementOpen&&<form className="movement-form card" id="inventory-movement-form" onSubmit={recordMovement}>
+      {manager&&movementOpen&&<form className="movement-form card" id="inventory-movement-form" onSubmit={recordMovement}>
        <h3 className="section-title">Enregistrer un mouvement</h3>
        <div className="form-grid">
         <label>Type<select name="movement_type" value={movementType} onChange={e=>setMovementType(e.target.value)}>{movementTypeOptions.map(x=><option key={x} value={x}>{movementLabels[x]||x}</option>)}</select></label>
