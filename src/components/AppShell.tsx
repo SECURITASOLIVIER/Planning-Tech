@@ -20,7 +20,7 @@ export function AppShell(){
    item('/inventory','Inventaire',Boxes),
    item('/kpi','KPI',Activity),
    item('/configuration','Configuration',Settings),
-   ]:[item('/inventory','Matériel',Boxes)])
+   ]:[item('/inventory','Inventaire',Boxes)])
  ]
  return <div className="workspace"><ToastHost/>
   <header className="topbar">
