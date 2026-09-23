@@ -56,18 +56,18 @@ export function TicketsPage(){
  const {data:profiles=[]}=useQuery({queryKey:['profiles','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('profiles').select('*').order('display_name');if(error)throw error;return data as Profile[]}})
  const {data:config=[]}=useQuery({queryKey:['config'],queryFn:async()=>{const {data,error}=await supabase.from('config_values').select('*').eq('active',true).order('sort_order');if(error)throw error;return data||[]}})
  const {data:customers=[]}=useQuery({queryKey:['customers','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('customers').select('*').order('name');if(error)throw error;return data as Customer[]}})
- const {data:customerContacts=[]}=useQuery({queryKey:['customer-contacts','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('customer_contacts').select('*').eq('active',true).order('last_name');if(error)throw error;return data as CustomerContact[]}})
- const {data:distribution=[]}=useQuery({queryKey:['notification-distribution'],queryFn:async()=>{const {data,error}=await supabase.from('notification_distribution_recipients').select('*').eq('active',true).order('sort_order');if(error)throw error;return data||[]}})
+ const {data:customerContacts=[]}=useQuery({queryKey:['customer-contacts','tickets'],enabled:manager,queryFn:async()=>{const {data,error}=await supabase.from('customer_contacts').select('*').eq('active',true).order('last_name');if(error)throw error;return data as CustomerContact[]}})
+ const {data:distribution=[]}=useQuery({queryKey:['notification-distribution'],enabled:manager,queryFn:async()=>{const {data,error}=await supabase.from('notification_distribution_recipients').select('*').eq('active',true).order('sort_order');if(error)throw error;return data||[]}})
  const {data:communicationTemplates=[]}=useQuery({queryKey:['communication_templates','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('communication_templates').select('*').eq('channel','Outlook').eq('active',true).order('theme').order('sort_order').order('title');if(error)throw error;return data as CommunicationTemplate[]}})
- const {data:materialsCatalog=[]}=useQuery({queryKey:['materials-catalog','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('materials_catalog').select('*').eq('active',true).order('label');if(error)throw error;return data||[]}})
- const {data:inventoryItems=[]}=useQuery({queryKey:['inventory','tickets'],queryFn:async()=>{const {data,error}=await supabase.from('inventory_items').select('*').eq('active',true).order('category').order('model');if(error)throw error;return data as InventoryItem[]}})
+ const {data:materialsCatalog=[]}=useQuery({queryKey:['materials-catalog','tickets'],enabled:manager,queryFn:async()=>{const {data,error}=await supabase.from('materials_catalog').select('*').eq('active',true).order('label');if(error)throw error;return data||[]}})
+ const {data:inventoryItems=[]}=useQuery({queryKey:['inventory','tickets'],enabled:manager,queryFn:async()=>{const {data,error}=await supabase.from('inventory_items').select('*').eq('active',true).order('category').order('model');if(error)throw error;return data as InventoryItem[]}})
 
  const {data:comments=[]}=useQuery({queryKey:['comments',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_comments').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
  const {data:history=[]}=useQuery({queryKey:['ticket-history-detail',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_history').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
  const {data:materials=[]}=useQuery({queryKey:['ticket-materials-detail',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_materials').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
  const {data:movements=[]}=useQuery({queryKey:['ticket-stock-detail',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('inventory_movements').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
- const {data:ticketRecipients=[]}=useQuery({queryKey:['ticket-notification-recipients',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_notification_recipients').select('*').eq('ticket_id',selected!.id!).order('created_at');if(error)throw error;return data||[]}})
- const {data:ticketNotifications=[]}=useQuery({queryKey:['ticket-notifications',selected?.id],enabled:!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_notifications').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
+ const {data:ticketRecipients=[]}=useQuery({queryKey:['ticket-notification-recipients',selected?.id],enabled:manager&&!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_notification_recipients').select('*').eq('ticket_id',selected!.id!).order('created_at');if(error)throw error;return data||[]}})
+ const {data:ticketNotifications=[]}=useQuery({queryKey:['ticket-notifications',selected?.id],enabled:manager&&!!selected?.id,queryFn:async()=>{const {data,error}=await supabase.from('ticket_notifications').select('*').eq('ticket_id',selected!.id!).order('created_at',{ascending:false});if(error)throw error;return data||[]}})
 
  const cfg=(kind:string)=>config.filter((x:any)=>x.kind===kind)
  const defaultLabel=(kind:string,code:string)=>cfg(kind).find((x:any)=>x.code===code)?.label||''
@@ -108,7 +108,7 @@ export function TicketsPage(){
  },[draftCustomerId,customers,customerContacts,recipientEmails])
 
  useEffect(()=>{if(selected&&!selected.id){setSelected(s=>({...s,status:s?.status||defaultLabel('status','new'),priority:s?.priority||defaultLabel('priority','normal'),category:s?.category||cfg('category')[0]?.label||'',intervention_type:s?.intervention_type||cfg('type')[0]?.label||''}))}},[config])
- useEffect(()=>{if(selected?.id)setRecipientEmails(ticketRecipients.map((x:any)=>String(x.email).toLowerCase()))},[selected?.id,ticketRecipients])
+ useEffect(()=>{if(manager&&selected?.id)setRecipientEmails(ticketRecipients.map((x:any)=>String(x.email).toLowerCase()))},[manager,selected?.id,ticketRecipients])
 
  const openTicket=(t:Ticket)=>{setSelected(t);setDraftCustomerId(t.customer_id||'');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null);setEditingMaterialId(null);setMaterialLabel('');setMaterialQty(1);setMaterialNote('');setStockItemId('');setStockQty(1);setStockReason('')}
  const newTicket=()=>{setSelected({...emptyTicket(),assigned_to:manager?null:profile?.id||null});setDraftCustomerId('');setRecipientEmails([]);setRecipientInput('');setCommentText('');setClosureText('');setClosureOpen(false);setCommunicationTarget(null);setEditingMaterialId(null);setMaterialLabel('');setMaterialQty(1);setMaterialNote('');setStockItemId('');setStockQty(1);setStockReason('')}
@@ -125,12 +125,14 @@ export function TicketsPage(){
  const removeRecipient=(email:string)=>setRecipientEmails(prev=>prev.filter(x=>x!==email))
 
  const syncRecipients=async(ticketId:string)=>{
+  if(!manager)return
   const {error}=await supabase.rpc('set_ticket_notification_recipients',{p_ticket_id:ticketId,p_emails:recipientEmails})
   if(error)throw error
   await qc.invalidateQueries({queryKey:['ticket-notification-recipients',ticketId]})
  }
 
  const prepareNotification=async(ticket:Ticket,type:TicketNotificationType)=>{
+  if(!manager)return
   const recipientList=[...new Set([
    ...distribution.map((x:any)=>String(x.email).trim().toLowerCase()),
    ...recipientEmails
@@ -178,14 +180,17 @@ export function TicketsPage(){
    saved=data as Ticket;action='create';notify('Ticket créé avec succès.')
   }
 
-  try{await syncRecipients(saved.id)}catch(e:any){notify('Ticket enregistré, mais les destinataires n’ont pas pu être enregistrés : '+(e?.message||'erreur'),'error')}
+  if(manager){
+   try{await syncRecipients(saved.id)}catch(e:any){notify('Ticket enregistré, mais les destinataires n’ont pas pu être enregistrés : '+(e?.message||'erreur'),'error')}
+  }
   setSelected(saved);setDraftCustomerId(saved.customer_id||'')
   await qc.invalidateQueries({queryKey:['tickets']})
-  await prepareNotification(saved,action)
+  if(manager)await prepareNotification(saved,action)
  }
 
  const addComment=async(scope:'internal'|'notification')=>{
   if(!selected?.id||!profile)return
+  if(scope==='notification'&&!manager){notify('Les notifications sont réservées au Manager.','error');return}
   const body=commentText.trim()
   if(!body){notify('Saisis un commentaire avant de l’ajouter.','error');return}
   try{
@@ -195,7 +200,7 @@ export function TicketsPage(){
    setCommentText('')
    notify(scope==='internal'?'Commentaire interne ajouté.':'Commentaire notification ajouté.')
    await qc.invalidateQueries({queryKey:['comments',selected.id]})
-   if(scope==='notification'){
+   if(scope==='notification'&&manager){
     await prepareNotification(selected as Ticket,'comment')
    }
   }finally{setCommentBusy(false)}
@@ -215,7 +220,7 @@ export function TicketsPage(){
    const saved=data as Ticket
    setSelected(saved);setClosureOpen(false);notify('Ticket clôturé.')
    await qc.invalidateQueries({queryKey:['tickets']})
-   await prepareNotification(saved,'close')
+   if(manager)await prepareNotification(saved,'close')
   }finally{setClosureBusy(false)}
  }
 
@@ -240,6 +245,7 @@ export function TicketsPage(){
  }
 
  const insertCommunication=async(template:CommunicationTemplate)=>{
+  if(!manager){notify('Communication de notification réservée au Manager.','error');return}
   const prepared=communicationContent(template)
   if(communicationTarget==='comment'){
    setCommentText(prev=>[prev.trim(),prepared.body.trim()].filter(Boolean).join('\n\n'))
@@ -254,6 +260,7 @@ export function TicketsPage(){
  }
 
  const copyCommunication=async(template:CommunicationTemplate)=>{
+  if(!manager){notify('Communication de notification réservée au Manager.','error');return}
   const prepared=communicationContent(template)
   await navigator.clipboard.writeText([prepared.subject?('Objet : '+prepared.subject):'',prepared.body].filter(Boolean).join('\n\n'))
   await logCommunicationUse(template,'copy',{target:communicationTarget})
@@ -261,15 +268,17 @@ export function TicketsPage(){
  }
 
  const mailCommunication=async(template:CommunicationTemplate)=>{
+  if(!manager){notify('Communication de notification réservée au Manager.','error');return}
   const prepared=communicationContent(template)
   await logCommunicationUse(template,'open_mail',{target:communicationTarget,recipients:ticketRecipientList()})
   window.location.href=mailtoForTemplate(ticketRecipientList(),prepared.subject,prepared.body)
  }
 
- const startEditMaterial=(m:any)=>{setEditingMaterialId(m.id);setMaterialLabel(m.label||'');setMaterialQty(Number(m.quantity||1));setMaterialNote(m.note||'')}
+ const startEditMaterial=(m:any)=>{if(!manager){notify('Gestion du matériel réservée au Manager.','error');return}setEditingMaterialId(m.id);setMaterialLabel(m.label||'');setMaterialQty(Number(m.quantity||1));setMaterialNote(m.note||'')}
  const resetMaterialEditor=()=>{setEditingMaterialId(null);setMaterialLabel('');setMaterialQty(1);setMaterialNote('')}
 
  const saveMaterial=async()=>{
+  if(!manager){notify('Gestion du matériel réservée au Manager.','error');return}
   if(!selected?.id)return
   const label=materialLabel.trim()
   if(!label){notify('Le libellé du matériel est obligatoire.','error');return}
@@ -295,6 +304,7 @@ export function TicketsPage(){
  }
 
  const removeMaterial=async(m:any)=>{
+  if(!manager){notify('Gestion du matériel réservée au Manager.','error');return}
   if(!selected?.id)return
   if(!confirm('Retirer "'+m.label+'" du ticket ?'))return
   const {error}=await supabase.from('ticket_materials').delete().eq('id',m.id)
@@ -308,6 +318,7 @@ export function TicketsPage(){
  }
 
  const useStockMaterial=async()=>{
+  if(!manager){notify('Gestion du stock réservée au Manager.','error');return}
   if(!selected?.id)return
   if(!stockItemId){notify('Choisis une référence de l’inventaire.','error');return}
   if(stockQty<1){notify('La quantité doit être au moins de 1.','error');return}
@@ -340,7 +351,7 @@ export function TicketsPage(){
   const saved=data as Ticket
   setSelected(saved);notify('Ticket rouvert.')
   await qc.invalidateQueries({queryKey:['tickets']})
-  await prepareNotification(saved,'reopen')
+  if(manager)await prepareNotification(saved,'reopen')
  }
 
  const markOutlookOpened=async()=>{
@@ -430,14 +441,14 @@ export function TicketsPage(){
     <label>Demandeur<input name="requester" defaultValue={selected.requester||''}/></label>
     <label>Client<select name="customer_id" defaultValue={selected.customer_id||''} onChange={e=>setDraftCustomerId(e.target.value)}><option value="">— Aucun —</option>{customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
 
-    <div className="full ticket-recipient-editor">
+    {manager&&<>    <div className="full ticket-recipient-editor">
      <div className="ticket-recipient-head"><div><Mail size={16}/><b>Notifications Outlook</b></div><span>{recipientEmails.length}/5 contacts ticket</span></div>
      <div className="distribution-summary"><span>Liste de distribution globale</span>{distribution.length?distribution.map((x:any)=><b key={x.id}>{x.name?x.name+' • ':''}{x.email}</b>):<small>Aucun destinataire global configuré dans Configuration.</small>}</div>
      <div className="recipient-chips">{recipientEmails.map(email=><span className="recipient-chip" key={email}>{email}<button type="button" onClick={()=>removeRecipient(email)} aria-label={'Retirer '+email}><Trash2 size={12}/></button></span>)}</div>
      <div className="recipient-add-row"><input type="email" value={recipientInput} onChange={e=>setRecipientInput(e.target.value)} placeholder="contact@client.fr" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addRecipient()}}}/><button type="button" className="secondary" onClick={()=>addRecipient()} disabled={recipientEmails.length>=5}><UserPlus size={14}/> Ajouter</button></div>
      {customerSuggestions.length>0&&<div className="recipient-suggestions"><span>Contacts du client</span><div>{customerSuggestions.map(x=><button type="button" className="ghost small" key={x.email} onClick={()=>addRecipient(x.email)}>{x.label}<small>{x.email}</small></button>)}</div></div>}
      <small className="muted">À chaque création, mise à jour, clôture ou réouverture, Outlook préparera un message pour la liste globale + ces contacts.</small>
-    </div>
+    </div></>}
 
     <label>Catégorie<select name="category" defaultValue={selected.category||''}>{cfg('category').map((x:any)=><option key={x.id}>{x.label}</option>)}</select></label>
     <label>Type<select name="type" defaultValue={selected.intervention_type||''}>{cfg('type').map((x:any)=><option key={x.id}>{x.label}</option>)}</select></label>
@@ -461,11 +472,13 @@ export function TicketsPage(){
     <section className="ticket-comment-composer">
      <div className="ticket-comment-composer-head"><div><MessageSquarePlus size={16}/><b>Ajouter un commentaire</b></div><span>{commentText.length} caractère{commentText.length>1?'s':''}</span></div>
      <textarea value={commentText} onChange={e=>setCommentText(e.target.value)} placeholder="Saisis ici le compte rendu, les actions réalisées, le constat ou les informations à transmettre…" rows={7}/>
-     <div className="ticket-comment-actions"><button className="ghost" onClick={()=>setCommunicationTarget('comment')}><MessageSquareText size={15}/> Communication</button><button className="secondary ticket-comment-submit internal" onClick={()=>void addComment('internal')} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Commentaire interne'}</button><button className="primary ticket-comment-submit notification" onClick={()=>void addComment('notification')} disabled={commentBusy||!commentText.trim()}><Mail size={15}/>{commentBusy?' Enregistrement…':' Commentaire notification'}</button></div>
+     <div className="ticket-comment-actions">{manager&&<button className="ghost" onClick={()=>setCommunicationTarget('comment')}><MessageSquareText size={15}/> Communication</button>}<button className="secondary ticket-comment-submit internal" onClick={()=>void addComment('internal')} disabled={commentBusy||!commentText.trim()}><MessageSquarePlus size={15}/>{commentBusy?' Enregistrement…':' Commentaire interne'}</button>{manager&&<button className="primary ticket-comment-submit notification" onClick={()=>void addComment('notification')} disabled={commentBusy||!commentText.trim()}><Mail size={15}/>{commentBusy?' Enregistrement…':' Commentaire notification'}</button>}</div>
     </section>
 
+    {manager&&<div className="ticket-manager-only-section">
     <h3 className="section-title"><Mail size={15}/> Notifications Outlook ({ticketNotifications.length})</h3>
     <div className="planning-history-list">{ticketNotifications.length===0&&<span className="muted">Aucune notification enregistrée.</span>}{ticketNotifications.map((n:any)=><details className="compact-history" key={n.id}><summary><b>{n.notification_type} • {n.confirmation_status==='confirmed'?'Envoyée':n.confirmation_status==='pending'?'À confirmer':'Non envoyée'}</b><small>{excelDate(n.created_at)} • {techName(n.actor_id)}</small></summary><div className="notification-history-detail"><b>{n.subject}</b><span>Destinataires : {(n.recipients||[]).join('; ')||'Aucun'}</span><span>Outlook ouvert : {n.outlook_opened_at?excelDate(n.outlook_opened_at):'Non tracé'}</span><pre>{n.body}</pre></div></details>)}</div>
+    </div>}
 
     <h3 className="section-title"><MessageSquarePlus size={15}/> Commentaires ({comments.length})</h3>
     <div className="planning-history-list">{comments.length===0&&<span className="muted">Aucun commentaire.</span>}{comments.map((c:any)=><div className="planning-comment-row" key={c.id}><div className="comment-row-head"><b>{c.author_name||techName(c.author_id)}</b><span className={'badge '+(c.comment_scope==='notification'?'green':'')}>{c.comment_scope==='notification'?'Notification':'Interne'}</span></div><small>{excelDate(c.created_at)}</small><p>{c.body}</p></div>)}</div>
@@ -475,6 +488,7 @@ export function TicketsPage(){
 
     <h3 className="section-title"><Package size={15}/> Matériel & stock</h3>
 
+    {manager&&<div className="ticket-manager-only-section">
     <section className="ticket-material-editor">
      <div className="ticket-material-editor-head"><div><Package size={16}/><b>{editingMaterialId?'Corriger un matériel':'Ajouter du matériel'}</b></div>{editingMaterialId&&<button className="ghost small" onClick={resetMaterialEditor}>Annuler correction</button>}</div>
      <div className="ticket-material-form">
@@ -494,17 +508,18 @@ export function TicketsPage(){
       <button className="primary" onClick={()=>void useStockMaterial()} disabled={materialBusy||!stockItemId}><Package size={14}/> Sortir & lier</button>
      </div>
     </section>
+    </div>}
 
     <div className="planning-history-list">
-     {materials.map((m:any)=><div className="planning-stock-row ticket-material-row" key={'mat-'+m.id}><div><b>{m.label} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.note||'Sans note'}</small></div><div className="actions"><button className="ghost small" onClick={()=>startEditMaterial(m)}>Corriger</button><button className="danger small" onClick={()=>void removeMaterial(m)}><Trash2 size={13}/></button></div></div>)}
+     {materials.map((m:any)=><div className="planning-stock-row ticket-material-row" key={'mat-'+m.id}><div><b>{m.label} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.note||'Sans note'}</small></div>{manager&&<div className="actions"><button className="ghost small" onClick={()=>startEditMaterial(m)}>Corriger</button><button className="danger small" onClick={()=>void removeMaterial(m)}><Trash2 size={13}/></button></div>}</div>)}
      {movements.map((m:any)=><details className="compact-history" key={'mov-'+m.id}><summary><b>{m.movement_type} × {m.quantity}</b><small>{excelDate(m.created_at)} • {m.reason||'Sans motif'}</small></summary><div className="detail-key-values"><div><span>Stock</span><b>{m.old_total??'—'} → {m.new_total??'—'}</b></div><div><span>Bénéficiaire</span><b>{m.assignee||'—'}</b></div><div><span>Acteur</span><b>{techName(m.actor_id)}</b></div><div><span>Note</span><b>{m.note||'—'}</b></div></div></details>)}
      {materials.length===0&&movements.length===0&&<span className="muted">Aucun matériel lié.</span>}
     </div>
    </>}
   </DetailDrawer>}
 
-  {closureOpen&&selected?.id&&<TicketClosureDialog ticketNumber={selected.ticket_number||'Ticket'} value={closureText} onChange={setClosureText} onCommunication={()=>setCommunicationTarget('closure')} onClose={()=>setClosureOpen(false)} onSubmit={close} busy={closureBusy}/>}
-  {communicationTarget&&selected?.id&&<TicketCommunicationPicker templates={communicationTemplates} target={communicationTarget} onClose={()=>setCommunicationTarget(null)} onInsert={template=>void insertCommunication(template)} onCopy={template=>void copyCommunication(template)} onMail={template=>void mailCommunication(template)}/>}
-  {pendingNotification&&<TicketNotificationDialog notification={pendingNotification} onOpenOutlook={markOutlookOpened} onConfirm={confirmNotification}/>}
+  {closureOpen&&selected?.id&&<TicketClosureDialog ticketNumber={selected.ticket_number||'Ticket'} value={closureText} onChange={setClosureText} onCommunication={manager?()=>setCommunicationTarget('closure'):undefined} onClose={()=>setClosureOpen(false)} onSubmit={close} busy={closureBusy}/>}
+  {manager&&communicationTarget&&selected?.id&&<TicketCommunicationPicker templates={communicationTemplates} target={communicationTarget} onClose={()=>setCommunicationTarget(null)} onInsert={template=>void insertCommunication(template)} onCopy={template=>void copyCommunication(template)} onMail={template=>void mailCommunication(template)}/>}
+  {manager&&pendingNotification&&<TicketNotificationDialog notification={pendingNotification} onOpenOutlook={markOutlookOpened} onConfirm={confirmNotification}/>}
  </div>
 }
