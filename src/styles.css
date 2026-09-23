@@ -639,3 +639,19 @@ label{display:grid;gap:5px;font-weight:900;font-size:9px;text-transform:uppercas
  .ticket-cost-summary .total{grid-column:1/-1}
  .cost-kpis{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 }
+
+/* Final planning views: Day / Week / Month only */
+@media(max-width:640px){
+ .planning-view-tabs{grid-template-columns:repeat(3,1fr)!important}
+}
+
+/* Internal vs notification comments */
+.comment-row-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.comment-row-head b{min-width:0}
+.ticket-comment-submit.internal{border-color:#b8cad9;background:#f5f8fb;color:#34566f}
+.ticket-comment-submit.notification{font-weight:900}
+@media(max-width:640px){
+ .ticket-comment-actions{grid-template-columns:1fr 1fr}
+ .ticket-comment-actions>button:first-child{grid-column:1/-1}
+ .ticket-comment-actions .ticket-comment-submit{width:100%;justify-content:center;font-size:9px;padding-left:5px;padding-right:5px}
+}
