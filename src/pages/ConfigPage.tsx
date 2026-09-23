@@ -2,7 +2,8 @@ import { FormEvent,useRef,useState } from 'react'
 import { useQuery,useQueryClient } from '@tanstack/react-query'
 import { DatabaseBackup,Download,Mail,Plus,Trash2,Upload } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import { runCompleteBusinessBackup } from '../lib/exportDatabase'\nimport { importCompleteBusinessDatabase } from '../lib/importDatabase'
+import { runCompleteBusinessBackup } from '../lib/exportDatabase'
+import { importCompleteBusinessDatabase } from '../lib/importDatabase'
 import { notify } from '../lib/notify'
 
 const kinds=[['status','Statuts'],['priority','Priorités'],['category','Catégories'],['type','Types']]
@@ -10,7 +11,10 @@ const kinds=[['status','Statuts'],['priority','Priorités'],['category','Catégo
 export function ConfigPage(){
  const qc=useQueryClient()
  const [kind,setKind]=useState('status')
- const [backupBusy,setBackupBusy]=useState(false)\n const [importBusy,setImportBusy]=useState(false)\n const [importProgress,setImportProgress]=useState('')\n const importRef=useRef<HTMLInputElement|null>(null)
+ const [backupBusy,setBackupBusy]=useState(false)
+ const [importBusy,setImportBusy]=useState(false)
+ const [importProgress,setImportProgress]=useState('')
+ const importRef=useRef<HTMLInputElement|null>(null)
 
  const {data=[]}=useQuery({queryKey:['config'],queryFn:async()=>{const {data,error}=await supabase.from('config_values').select('*').order('sort_order');if(error)throw error;return data||[]}})
  const {data:distribution=[]}=useQuery({queryKey:['notification-distribution'],queryFn:async()=>{const {data,error}=await supabase.from('notification_distribution_recipients').select('*').order('sort_order').order('email');if(error)throw error;return data||[]}})
@@ -69,7 +73,9 @@ export function ConfigPage(){
  }
 
  const restore=async(file:File)=>{
-  if(!confirm('Importer '+file.name+' ?\n\nMode sécurisé : les lignes portant les mêmes ID seront mises à jour ou recréées. Aucune table ne sera vidée automatiquement.'))return
+  if(!confirm('Importer '+file.name+' ?
+
+Mode sécurisé : les lignes portant les mêmes ID seront mises à jour ou recréées. Aucune table ne sera vidée automatiquement.'))return
   try{
    setImportBusy(true);setImportProgress('Lecture de la sauvegarde…');notify('Import de la sauvegarde en cours…','info')
    const counts=await importCompleteBusinessDatabase(file,p=>setImportProgress(p.message+' ('+p.tableIndex+'/'+p.tableTotal+')'))
