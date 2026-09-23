@@ -119,8 +119,7 @@ export function TicketsPage(){
   if(!email)return
   if(!validEmail(email)){notify('Adresse e-mail invalide.','error');return}
   if(recipientEmails.includes(email)){notify('Cette adresse est déjà ajoutée.','info');return}
-  if(recipientEmails.length>=5){notify('5 contacts e-mail maximum par ticket.','error');return}
-  setRecipientEmails(prev=>[...prev,email]);setRecipientInput('')
+   setRecipientEmails(prev=>[...prev,email]);setRecipientInput('')
  }
  const removeRecipient=(email:string)=>setRecipientEmails(prev=>prev.filter(x=>x!==email))
 
@@ -442,10 +441,10 @@ export function TicketsPage(){
     <label>Client<select name="customer_id" defaultValue={selected.customer_id||''} onChange={e=>setDraftCustomerId(e.target.value)}><option value="">— Aucun —</option>{customers.map(c=><option key={c.id} value={c.id}>{c.name}</option>)}</select></label>
 
     {manager&&<>    <div className="full ticket-recipient-editor">
-     <div className="ticket-recipient-head"><div><Mail size={16}/><b>Notifications Outlook</b></div><span>{recipientEmails.length}/5 contacts ticket</span></div>
+     <div className="ticket-recipient-head"><div><Mail size={16}/><b>Notifications Outlook</b></div><span>{recipientEmails.length} contact{recipientEmails.length>1?'s':''} ticket</span></div>
      <div className="distribution-summary"><span>Liste de distribution globale</span>{distribution.length?distribution.map((x:any)=><b key={x.id}>{x.name?x.name+' • ':''}{x.email}</b>):<small>Aucun destinataire global configuré dans Configuration.</small>}</div>
      <div className="recipient-chips">{recipientEmails.map(email=><span className="recipient-chip" key={email}>{email}<button type="button" onClick={()=>removeRecipient(email)} aria-label={'Retirer '+email}><Trash2 size={12}/></button></span>)}</div>
-     <div className="recipient-add-row"><input type="email" value={recipientInput} onChange={e=>setRecipientInput(e.target.value)} placeholder="contact@client.fr" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addRecipient()}}}/><button type="button" className="secondary" onClick={()=>addRecipient()} disabled={recipientEmails.length>=5}><UserPlus size={14}/> Ajouter</button></div>
+     <div className="recipient-add-row"><input type="email" value={recipientInput} onChange={e=>setRecipientInput(e.target.value)} placeholder="contact@client.fr" onKeyDown={e=>{if(e.key==='Enter'){e.preventDefault();addRecipient()}}}/><button type="button" className="secondary" onClick={()=>addRecipient()} ><UserPlus size={14}/> Ajouter</button></div>
      {customerSuggestions.length>0&&<div className="recipient-suggestions"><span>Contacts du client</span><div>{customerSuggestions.map(x=><button type="button" className="ghost small" key={x.email} onClick={()=>addRecipient(x.email)}>{x.label}<small>{x.email}</small></button>)}</div></div>}
      <small className="muted">À chaque création, mise à jour, clôture ou réouverture, Outlook préparera un message pour la liste globale + ces contacts.</small>
     </div></>}
